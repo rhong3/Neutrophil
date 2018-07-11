@@ -8,15 +8,10 @@ Created on Mon Aug  7 12:02:45 2017
 
 from datetime import datetime
 import os
-import re
 import sys
 
 import numpy as np
 import tensorflow as tf
-
-from layers import Dense,conv_encoder,conv_decoder
-#import plot
-from utils import composeAll, print_
 import inception_v3
 
 slim = tf.contrib.slim
@@ -29,26 +24,25 @@ class INCEPTION():
     
     DEFAULTS={
            "batch_size": 128,
-           "dropout": 1.,
-           "learning_rate":1E-3,
-           "lambda_l2_reg": 1E-5
+           "dropout": 0.8,
+           "learning_rate":1E-3
     } 
     
     RESTORE_KEY = "cnn_to_restore"
    
-    def __init__(self, architecture,d_hyperparams={},
-                 save_graph_def=True, meta_graph=None, pre_trained=None,
+    def __init__(self, input_dim,d_hyperparams={},
+                 save_graph_def=True, meta_graph=None,
                 log_dir="./log"):
         
-        self.architecture = architecture
+        self.input_dim = input_dim
         self.__dict__.update(INCEPTION.DEFAULTS, **d_hyperparams)
         self.sesh=tf.Session()
-        self.pre_trained=pre_trained
+
         
        
        
         if meta_graph: # load saved graph
-            model_datetime, model_name = os.path.basename(meta_graph).split("_cnn_")
+            model_datetime, model_name = os.path.basename(meta_graph).split("_inception3_")
             meta_graph = os.path.abspath(meta_graph)
             tf.train.import_meta_graph(meta_graph + ".meta").restore(
                 self.sesh, meta_graph)
@@ -64,15 +58,24 @@ class INCEPTION():
             
       
         # unpack handles for tensor ops to feed or fetch for lower layers
-        (self.x_in, self.cnn_dropout_,  self.is_train,
+        (self.x_in, self.dropout_,  self.is_train,
          self.y_in, self.logits, self.pred, self.pred_cost,
          self.global_step, self.train_op, self.merged_summary) = handles
         
         #print(self.batch_size,flush=True)
         #print(self.learning_rate,flush=True)
                
-        if save_graph_def:
-            self.logger = tf.summary.FileWriter(log_dir, self.sesh.graph)
+        if save_graph_def: # tensorboard
+            try:
+                os.mkdir(log_dir + '/training')
+                os.mkdir(log_dir + '/validation')
+                
+            except(FileExistsError):
+                pass
+            
+            self.train_logger = tf.summary.FileWriter(log_dir + '/training', self.sesh.graph)
+            self.valid_logger = tf.summary.FileWriter(log_dir + '/validation', self.sesh.graph)
+    
         
     @property
     def step(self):
@@ -80,8 +83,8 @@ class INCEPTION():
     
     def _buildGraph(self):
         x_in = tf.placeholder(tf.float32, shape=[None, # enables variable batch size
-                                                 self.architecture[0]], name="x")
-        x_in_reshape = tf.reshape(x_in, [-1, self.architecture[1], self.architecture[2], 3])
+                                                 self.input_dim[0]], name="x")
+        x_in_reshape = tf.reshape(x_in, [-1, self.input_dim[1], self.input_dim[2], 3])
         
         dropout = tf.placeholder_with_default(1., shape=[], name="dropout")
         
@@ -95,8 +98,8 @@ class INCEPTION():
         
         logits, _ = inception_v3.inception_v3(x_in_reshape,
                  num_classes=2,
-                 is_training=True,
-                 dropout_keep_prob=0.8,
+                 is_training=is_train,
+                 dropout_keep_prob=dropout,
                  min_depth=16,
                  depth_multiplier=1.0,
                  prediction_fn=slim.softmax,
@@ -135,8 +138,8 @@ class INCEPTION():
         feed_dict={self.x_in:x, self.is_train: train_status}
         return self.sesh.run(self.pred, feed_dict=feed_dict)
     
-    def train(self, X, max_iter=np.inf, max_epochs=np.inf,
-              verbose=True, save=True, outdir="./out", plots_outdir="./png"):
+    def train(self, X, max_iter=np.inf, max_epochs=np.inf,cross_validate=True,
+              verbose=True, save=True, outdir="./out"):
         
         if save:
             saver = tf.train.Saver(tf.global_variables(),max_to_keep=None)
@@ -147,10 +150,10 @@ class INCEPTION():
             print("------- Training begin: {} -------\n".format(now),flush=True)
             
             while True:
-                x, y = X.next_batch(self.batch_size)
+                x, y = X.train.next_batch(self.batch_size)
                
                 feed_dict = {self.x_in: x, self.y_in: y,
-                             self.cnn_dropout_: self.dropout}
+                             self.dropout_: self.dropout}
                 
                 fetches = [self.merged_summary, self.logits, self.pred,
                            self.pred_cost, self.global_step, self.train_op]
@@ -167,37 +170,56 @@ class INCEPTION():
                                                 #run_metadata=run_metadata
                                                 )
                 
-                self.logger.add_summary(summary,i)
+                self.train_logger.add_summary(summary,i)
                 
                 # get runtime statistics every 1000 runs
                 #if i%1000 == 0:
                     #self.logger.add_run_metadata(run_metadata, 'step%d' % i)
-                    #err_train += cost
+                err_train += cost
                 
-                if i%5 == 0 and verbose:
+                if i%1 == 0 and verbose:
                     #print("round {} --> avg cost: ".format(i), err_train / i, flush=True)
                     print("round {} --> cost: ".format(i), cost, flush=True)
                     
+                
+                if i%1 == 0 and verbose:# and i >= 10000:
+                    
+                    if cross_validate:
+                        x, y = X.validation.next_batch(self.batch_size)
+                        feed_dict = {self.x_in: x, self.y_in: y}
+                        fetches = [self.pred_cost, self.merged_summary]
+                        valid_cost,  valid_summary = self.sesh.run(fetches, feed_dict)
+                        
+                        self.valid_logger.add_summary(valid_summary,i)
+                        
+
+                        print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
+                        
+                """    
                 if i%50000 == 0 and save:
                     interfile=os.path.join(os.path.abspath(outdir), "{}_cnn_{}".format(
-                            self.datetime, "_".join(map(str, self.architecture))))
+                            self.datetime, "_".join(map(str, self.input_dim))))
                     saver.save(self.sesh, interfile, global_step=self.step)
+                """
                     
-                if i >= max_iter or X.epochs_completed >= max_epochs:
+                if i >= max_iter or X.train.epochs_completed >= max_epochs:
                     print("final avg cost (@ step {} = epoch {}): {}".format(
-                        i, X.epochs_completed, err_train / i),flush=True)
+                        i, X.train.epochs_completed, err_train / i),flush=True)
                     
                     now = datetime.now().isoformat()[11:]
                     print("------- Training end: {} -------\n".format(now),flush=True)
                     
 
                     if save:
-                        outfile = os.path.join(os.path.abspath(outdir), "{}_cnn_{}".format(
-                            self.datetime, "_".join(map(str, self.architecture))))
+                        outfile = os.path.join(os.path.abspath(outdir), "{}_inception3_{}".format(
+                            self.datetime, "_".join(['dropout',str(self.dropout)])))
                         saver.save(self.sesh, outfile, global_step=self.step)
                     try:
-                        self.logger.flush()
-                        self.logger.close()
+                        self.train_logger.flush()
+                        self.train_logger.close()
+                        self.valid_logger.flush()
+                        self.valid_logger.close()
+                        
                     except(AttributeError): # not logging
                         continue
                     break    
@@ -208,5 +230,21 @@ class INCEPTION():
             
             now = datetime.now().isoformat()[11:]
             print("------- Training end: {} -------\n".format(now),flush=True)
+            
+            
+            if save:
+                outfile = os.path.join(os.path.abspath(outdir), "{}_inception3_{}".format(
+                            self.datetime, "_".join(['dropout',str(self.dropout)])))
+                saver.save(self.sesh, outfile, global_step=self.step)
+            try:
+                self.train_logger.flush()
+                self.train_logger.close()
+                self.valid_logger.flush()
+                self.valid_logger.close()
+                
+            
+            
+            except(AttributeError): # not logging
+                print('Not logging',flush=True)
             
             sys.exit(0)

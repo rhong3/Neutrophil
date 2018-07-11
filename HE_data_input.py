@@ -3,72 +3,10 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-#import pandas as pd
-from PIL import Image
-from skimage import morphology
-from skimage.color import rgb2hed
-from skimage.segmentation import clear_border
-from skimage.measure import label, regionprops
-from skimage.filters import threshold_adaptive
-from skimage.util import img_as_ubyte
-#import matplotlib.pyplot as plt
 
-#from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.python.framework import dtypes
 from six.moves import xrange
     
-def get_data(imagename,dim,out=False,outdir='./'):
-    """ imagename: the file name to read
-        dim: dimension of the roi tile in pixels
-    """
-    im=Image.open(imagename)
-    pix=np.array(im)
-    pix=pix[:,:,0:3]
-    nrow, ncol, _ = pix.shape    
-    subh=rgb2hed(pix)[:,:,0]
-    subh_min=np.amin(subh)
-    subh_range=np.ptp(subh)
-    hf=(subh-subh_min)/subh_range
-    hf=hf*2.0-1.0
-    hb=img_as_ubyte(hf)
-    block_size = 65
-    binary = threshold_adaptive(hb, block_size,method='mean')
-    clean_bw = morphology.closing(binary)
-    clean_bw=clear_border(clean_bw)
-    clean_bw=morphology.remove_small_objects(clean_bw, 20)
-    image_label = label(clean_bw)
-    nucprop=regionprops(image_label,intensity_image=hf)
-   
-    dat=np.empty((0,int(dim**2)),dtype='uint8')
-    dim2=int(dim/2)
-    #i=0
-    for region in nucprop:  
-        coords=list(region.centroid)
-        coords=list(map(int,coords))
-        if ((dim2<coords[0]<(nrow-dim2)) & (dim2<coords[1]<(ncol-dim2))):           
-            #coords_list=pd.read_table(coords,sep='\t',header=None,names=['x','y','creator','time'])   
-            """normalize the image data to float [0,1] will be carried out in the training step"""
-            tile=hb[(coords[0]-dim2):(coords[0]+dim2),(coords[1]-dim2):(coords[1]+dim2)]
-            tile=tile.astype(np.uint8)
-            #print(len(tile.flatten()))
-            dat=np.vstack([dat,tile.flatten()])
-            """
-            fig,ax = plt.subplots(1)
-            pixSize=list(pix.shape)
-            fig.set_size_inches(pixSize[1]/fig.dpi,pixSize[0]/fig.dpi)
-            ax.imshow(tile,cmap='Greys')
-            plt.axis('off')
-            plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
-            plt.savefig(imagename+str(i)+'_roi'+'.tif',dpi=fig.dpi,pad_inches=0)
-            i=i+1
-            """
-        else:
-            continue
-    if out:
-        np.savetxt(outdir+imagename+'_data.txt',dat,fmt='%i',delimiter='\t')
-    else:
-        return dat
-
 
 class DataSet(object):
 
