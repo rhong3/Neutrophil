@@ -1,5 +1,4 @@
 from openslide import OpenSlide
-from scipy import signal
 import numpy as np
 import pandas as pd
 import os

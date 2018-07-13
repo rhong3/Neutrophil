@@ -30,8 +30,8 @@ HYPERPARAMS = {
 MAX_ITER = 100#2**16
 MAX_EPOCHS = np.inf
 
-LOG_DIR = "./log/0710"
-METAGRAPH_DIR = "./out/0710"
+LOG_DIR = "../Neutrophil"
+METAGRAPH_DIR = "../Neutrophil"
 
 
 # to_load = 
@@ -75,9 +75,9 @@ def load_HE_data(train_dat_name,train_lab_name,valid_dat_name,valid_lab_name):
 
 def main(to_reload=None):
     
-    dat_f='/media/lwk/data/HE_Image/slides/slide80_mini_data.txt'
+    dat_f='../Neutrophil/Tiles_final/slide80_data.txt'
     
-    lab_f='/media/lwk/data/HE_Image/slides/slide80_mini_lab.txt'
+    lab_f='../Neutrophil/Tiles_final/slide80_lab.txt'
     
     
     HE = load_HE_data(train_dat_name=dat_f,
