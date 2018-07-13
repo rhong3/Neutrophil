@@ -26,6 +26,7 @@ if not os.path.exists('../Neutrophil/Tiles_final/neg'):
 coords = pd.read_excel('../Neutrophil/all_features_circa_July.xlsx', header=0)
 sample = coords.loc[(coords['Slide'] == 'Slide80.scn')]
 sample = sample.loc[(coords['Review'] == '+') | (coords['Review'] == '-')]
+sample = sample.sample(frac=1).reset_index(drop=True)
 pos = coords.loc[(coords['Review'] == '+') & (coords['Slide'] == 'Slide80.scn')]
 
 sample.to_csv('../Neutrophil/Tiles_final/sample.csv', header = 0, index = False)
@@ -57,25 +58,34 @@ dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
 tile_lab = []
 
 for index, row in sample.iterrows():
+    print(index)
     if row['Review'] == '+':
-        the_image = slide.read_region((row['X']-149, row['Y']-149), 0, (full_width_region, full_width_region))
-        the_image.save("../Neutrophil/Tiles_final/pos/region_x{}_y{}.png".format(format(row['X']-xo), format(row['Y']-yo)))
+        the_image = slide.read_region((row['X'] - 149, row['Y'] - 149), 0, (full_width_region, full_width_region))
+        the_image.save("../Neutrophil/Tiles_final/pos/region_x{}_y{}_0_rot0.png".format(format(row['X'] - xo),
+                                                                                         format(row['Y'] - yo)))
         pix = np.array(the_image)[:, :, 0:3]
         dat = np.vstack([dat, pix.flatten()])
         tile_lab.append(1)
-        for rot in range(90,355,90):
-            the_image_rot = the_image.rotate(rot)
-            the_image_rot.save("../Neutrophil/Tiles_final/pos/region_x{}_y{}_rot{}.png".format(format(row['X']-xo), format(row['Y']-yo), format(rot)))
+        for i in range(1,5):
+            intx = np.random.randint(low=50, high=250, size=1)[0]
+            inty = np.random.randint(low=50, high=250, size=1)[0]
+            the_image = slide.read_region((row['X']-intx, row['Y']-inty), 0, (full_width_region, full_width_region))
+            the_image.save("../Neutrophil/Tiles_final/pos/region_x{}_y{}_{}_rot0.png".format(format(row['X']-xo), format(row['Y']-yo), format(i)))
             pix = np.array(the_image)[:, :, 0:3]
             dat = np.vstack([dat, pix.flatten()])
             tile_lab.append(1)
+            for rot in range(90,355,90):
+                the_image_rot = the_image.rotate(rot)
+                the_image_rot.save("../Neutrophil/Tiles_final/pos/region_x{}_y{}_{}_rot{}.png".format(format(row['X']-xo), format(row['Y']-yo), format(i), format(rot)))
+                pix = np.array(the_image)[:, :, 0:3]
+                dat = np.vstack([dat, pix.flatten()])
+                tile_lab.append(1)
     elif row['Review'] == '-':
         checked = ckpt(row['X'], row['Y'], pos)
-        print(checked)
         if checked:
             the_image = slide.read_region((row['X'] - 149, row['Y'] - 149), 0, (full_width_region, full_width_region))
             the_image.save(
-                "../Neutrophil/Tiles_grow/neg/region_x{}_y{}.png".format(format(row['X'] - xo),
+                "../Neutrophil/Tiles_final/neg/region_x{}_y{}_rot0.png".format(format(row['X'] - xo),
                                                                          format(row['Y'] - yo)))
             pix = np.array(the_image)[:, :, 0:3]
             dat = np.vstack([dat, pix.flatten()])
