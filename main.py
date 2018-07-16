@@ -32,8 +32,7 @@ HYPERPARAMS = {
 
 MAX_ITER = 2**16
 MAX_EPOCHS = np.inf
-if not os.path.exists("../Neutrophil/{}".format(dirr)):
-        os.makedirs("../Neutrophil/{}".format(dirr))
+
 
 
 LOG_DIR = "../Neutrophil/{}".format(dirr)
@@ -125,7 +124,7 @@ if __name__ == "__main__":
             pass
 
     try:
-        to_reload = sys.argv[1]
+        to_reload = sys.argv[2]
         main(to_reload=to_reload)
     except(IndexError):
         main()

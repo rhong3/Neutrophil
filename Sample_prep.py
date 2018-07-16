@@ -1,9 +1,6 @@
 import os
-import sys
 import pandas as pd
-import numpy as np
 import sklearn.utils as sku
-import random
 
 
 pos_path = '../Neutrophil/Tiles_final/pos'
@@ -49,6 +46,7 @@ def samplesum():
 
 
 tot, pos, neg = samplesum()
-tot.to_csv('../Neutrophil/Tiles_final/tot_sample.csv', header = 0, index = False)
-pos.to_csv('../Neutrophil/Tiles_final/pos_sample.csv', header = 0, index = False)
-neg.to_csv('../Neutrophil/Tiles_final/neg_sample.csv', header = 0, index = False)
+
+tot.to_csv('../Neutrophil/Tiles_final/tot_sample.csv', index = False)
+pos.to_csv('../Neutrophil/Tiles_final/pos_sample.csv', index = False)
+neg.to_csv('../Neutrophil/Tiles_final/neg_sample.csv', index = False)
