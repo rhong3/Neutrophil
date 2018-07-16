@@ -4,6 +4,7 @@
 Created on Wed Jun 14 16:15:18 2017
 
 @author: lwk
+modified by RH
 """
 
 import os
@@ -14,6 +15,7 @@ import tensorflow as tf
 import HE_data_input
 import cnn
 
+dirr = sys.argv([1])
 
 
 IMG_DIM = 299
@@ -28,11 +30,14 @@ HYPERPARAMS = {
     "learning_rate": 1E-4
 }
 
-MAX_ITER = 100#2**16
+MAX_ITER = 2**16
 MAX_EPOCHS = np.inf
+if not os.path.exists("../Neutrophil/{}".format(dirr)):
+        os.makedirs("../Neutrophil/{}".format(dirr))
 
-LOG_DIR = "../Neutrophil"
-METAGRAPH_DIR = "../Neutrophil"
+
+LOG_DIR = "../Neutrophil/{}".format(dirr)
+METAGRAPH_DIR = "../Neutrophil/{}".format(dirr)
 
 
 # to_load = 
@@ -92,7 +97,7 @@ def main(to_reload=None):
         m = cnn.INCEPTION(INPUT_DIM,HYPERPARAMS, meta_graph=to_reload)
         print("Loaded!",flush=True)
         
-        x, y=HE.train.next_batch(1)
+        x, y=HE.train.next_batch(128)
         print(m.inference(x))
         print(y)
         
@@ -104,7 +109,7 @@ def main(to_reload=None):
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
         print("Trained!",flush=True)
           
-        x, y=HE.train.next_batch(1)
+        x, y=HE.train.next_batch(128)
         print(m.inference(x))
         print(y)
 
