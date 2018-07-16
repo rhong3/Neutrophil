@@ -15,7 +15,7 @@ import tensorflow as tf
 import HE_data_input
 import cnn
 
-dirr = sys.argv([1])
+dirr = sys.argv[1]
 
 
 IMG_DIM = 299
