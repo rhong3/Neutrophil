@@ -1,9 +1,5 @@
-import os
-import sys
 import pandas as pd
 import numpy as np
-import sklearn.utils as sku
-import random
 from PIL import Image
 
 dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
