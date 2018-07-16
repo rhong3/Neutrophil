@@ -15,6 +15,7 @@ import HE_data_input
 import cnn
 
 
+
 IMG_DIM = 299
 
 INPUT_DIM = [IMG_DIM**2*3, # Default input for INCEPTION_V3 network, 299*299*3
