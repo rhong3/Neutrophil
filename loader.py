@@ -10,7 +10,7 @@ for index, row in totlist.iterrows():
     image = Image.open(row['path'])
     pix = np.array(image)[:, :, 0:3]
     dat = np.vstack([dat, pix.flatten()])
-    tile_lab.append(1)
+    tile_lab.append(row['label'])
     if len(tile_lab) == 5000 or index == len(totlist['label'])-1:
         np.savetxt('../Neutrophil/Tiles_final/slide80_data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
         np.savetxt('../Neutrophil/Tiles_final/slide80_lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
