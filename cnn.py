@@ -178,12 +178,12 @@ class INCEPTION():
                     #self.logger.add_run_metadata(run_metadata, 'step%d' % i)
                 err_train += cost
                 
-                if i%1 == 0 and verbose:
+                if i%1000 == 0 and verbose:
                     #print("round {} --> avg cost: ".format(i), err_train / i, flush=True)
                     print("round {} --> cost: ".format(i), cost, flush=True)
                     
                 
-                if i%1 == 0 and verbose:# and i >= 10000:
+                if i%1000 == 0 and verbose:# and i >= 10000:
                     
                     if cross_validate:
                         x, y = X.validation.next_batch(self.batch_size)
