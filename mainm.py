@@ -75,7 +75,7 @@ def load_HE_data(train_dat_name, train_lab_name, valid_dat_name, valid_lab_name)
     return data_sets
 
 
-def main(to_reload=None):
+def main(to_reload=None, test=None):
     dat_f = '../Neutrophil/Tiles_final/slide80_data_{}.txt'.format(num)
 
     lab_f = '../Neutrophil/Tiles_final/slide80_lab_{}.txt'.format(num)
@@ -85,10 +85,21 @@ def main(to_reload=None):
                       valid_dat_name=dat_f,
                       valid_lab_name=lab_f)
 
-    if to_reload:  # restore
-
+    if to_reload:
         m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         print("Loaded!", flush=True)
+        m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
+                verbose=True, save=True, outdir=METAGRAPH_DIR)
+
+        x, y = HE.train.next_batch(128)
+        print(m.inference(x))
+        print(y)
+
+
+    elif test:  # restore
+
+        m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        print("Loaded! Ready for test!", flush=True)
 
         x, y = HE.train.next_batch(128)
         print(m.inference(x))
