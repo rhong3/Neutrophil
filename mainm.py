@@ -19,7 +19,7 @@ num = sys.argv[1]
 dirr = sys.argv[2]
 trn = sys.argv[3]
 vln = sys.argv[4]
-test = sys.argv[5]
+ttt = sys.argv[5]
 
 IMG_DIM = 299
 
@@ -87,9 +87,9 @@ def main(to_reload=None, test=None):
 
     vlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab.txt'.format(vln, vln)
 
-    tdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data.txt'.format(test, test)
+    tdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data.txt'.format(ttt, ttt)
 
-    tlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab.txt'.format(test, test)
+    tlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab.txt'.format(ttt, ttt)
 
 
     HE = load_HE_data(train_dat_name=dat_f,
@@ -124,11 +124,6 @@ def main(to_reload=None, test=None):
 
         m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         print("Loaded! Ready for test!", flush=True)
-
-        x, y = HE.validation.next_batch(HE.validation._num_examples)
-        print('Validation:')
-        print(m.inference(x))
-        print(y)
 
         x, y = HET.validation.next_batch(HET.validation._num_examples)
         print('Test:')
