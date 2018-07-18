@@ -1,3 +1,8 @@
+'''
+Tile images to 299x299
+RH 0716
+'''
+
 from openslide import OpenSlide
 import numpy as np
 import pandas as pd
