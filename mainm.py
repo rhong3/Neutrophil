@@ -17,9 +17,9 @@ import cnnm
 
 num = sys.argv[1]
 dirr = sys.argv[2]
-trn = sys.argv[4]
-vln = sys.argv[5]
-test = sys.argv[6]
+trn = sys.argv[3]
+vln = sys.argv[4]
+test = sys.argv[5]
 
 IMG_DIM = 299
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
             pass
 
     try:
-        to_reload = sys.argv[3]
+        to_reload = sys.argv[6]
         main(to_reload=to_reload)
     except(IndexError):
         main()
