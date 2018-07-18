@@ -1,3 +1,10 @@
+'''
+Prepare pd from image tiles
+RH 0717
+'''
+
+
+
 import os
 import pandas as pd
 import sklearn.utils as sku

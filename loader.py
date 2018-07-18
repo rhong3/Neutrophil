@@ -1,3 +1,8 @@
+'''
+Separate samples into 5000 each. txt
+RH 0717
+'''
+
 import pandas as pd
 import numpy as np
 from PIL import Image
