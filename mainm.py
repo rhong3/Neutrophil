@@ -26,10 +26,10 @@ INPUT_DIM = [IMG_DIM ** 2 * 3,  # Default input for INCEPTION_V3 network, 299*29
 HYPERPARAMS = {
     "batch_size": 1,
     "dropout": 0.8,
-    "learning_rate": 1E-4
+    "learning_rate": 1E-5
 }
 
-MAX_ITER = 2 ** 16
+MAX_ITER = 2 ** 20
 MAX_EPOCHS = np.inf
 
 LOG_DIR = "../Neutrophil/{}".format(dirr)

@@ -41,7 +41,7 @@ class INCEPTION():
         self.sesh = tf.Session()
 
         if meta_graph:  # load saved graph
-            model_datetime, model_name = os.path.basename(meta_graph).split("_inception3_")
+            model_name = os.path.basename(meta_graph)
             meta_graph = os.path.abspath(meta_graph)
             tf.train.import_meta_graph(meta_graph + ".meta").restore(
                 self.sesh, meta_graph)
