@@ -17,6 +17,9 @@ import cnnm
 
 num = sys.argv[1]
 dirr = sys.argv[2]
+trn = sys.argv[4]
+vln = sys.argv[5]
+test = sys.argv[6]
 
 IMG_DIM = 299
 
@@ -26,10 +29,10 @@ INPUT_DIM = [IMG_DIM ** 2 * 3,  # Default input for INCEPTION_V3 network, 299*29
 HYPERPARAMS = {
     "batch_size": 1,
     "dropout": 0.8,
-    "learning_rate": 1E-5
+    "learning_rate": 1E-3
 }
 
-MAX_ITER = 2 ** 20
+MAX_ITER = 2 ** 16
 MAX_EPOCHS = np.inf
 
 LOG_DIR = "../Neutrophil/{}".format(dirr)
@@ -76,14 +79,30 @@ def load_HE_data(train_dat_name, train_lab_name, valid_dat_name, valid_lab_name)
 
 
 def main(to_reload=None, test=None):
-    dat_f = '../Neutrophil/Tiles_final/slide80_data_{}.txt'.format(num)
+    dat_f = '../Neutrophil/{}_Tiles_final/slide{}_data_{}.txt'.format(trn, trn, num)
 
-    lab_f = '../Neutrophil/Tiles_final/slide80_lab_{}.txt'.format(num)
+    lab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab_{}.txt'.format(trn, trn, num)
+
+    vdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data.txt'.format(vln, vln)
+
+    vlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab.txt'.format(vln, vln)
+
+    tdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data.txt'.format(test, test)
+
+    tlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab.txt'.format(test, test)
+
 
     HE = load_HE_data(train_dat_name=dat_f,
                       train_lab_name=lab_f,
-                      valid_dat_name=dat_f,
-                      valid_lab_name=lab_f)
+                      valid_dat_name=vdat_f,
+                      valid_lab_name=vlab_f)
+
+
+    HET = load_HE_data(train_dat_name=dat_f,
+                      train_lab_name=lab_f,
+                      valid_dat_name=tdat_f,
+                      valid_lab_name=tlab_f)
+
 
     if to_reload:
         m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
@@ -91,17 +110,28 @@ def main(to_reload=None, test=None):
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
 
-        x, y = HE.train.next_batch(128)
+        x, y = HE.validation.next_batch(HE.validation._num_examples)
+        print('Validation:')
         print(m.inference(x))
         print(y)
 
+        x, y = HET.validation.next_batch(HET.validation._num_examples)
+        print('Test:')
+        print(m.inference(x))
+        print(y)
 
     elif test:  # restore
 
         m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         print("Loaded! Ready for test!", flush=True)
 
-        x, y = HE.train.next_batch(128)
+        x, y = HE.validation.next_batch(HE.validation._num_examples)
+        print('Validation:')
+        print(m.inference(x))
+        print(y)
+
+        x, y = HET.validation.next_batch(HET.validation._num_examples)
+        print('Test:')
         print(m.inference(x))
         print(y)
 
@@ -113,7 +143,13 @@ def main(to_reload=None, test=None):
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
         print("Trained!", flush=True)
 
-        x, y = HE.train.next_batch(128)
+        x, y = HE.validation.next_batch(HE.validation._num_examples)
+        print('Validation:')
+        print(m.inference(x))
+        print(y)
+
+        x, y = HET.validation.next_batch(HET.validation._num_examples)
+        print('Test:')
         print(m.inference(x))
         print(y)
 
