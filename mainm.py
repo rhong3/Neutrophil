@@ -3,8 +3,7 @@
 """
 Created on Wed Jun 14 16:15:18 2017
 
-@author: lwk
-modified by RH
+@authors: lwk, RH
 """
 import matplotlib
 matplotlib.use('Agg')

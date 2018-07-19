@@ -3,8 +3,8 @@
 """
 Created on Mon Aug  7 12:02:45 2017
 
-@author: lwk
-modified by RH
+@authors: lwk, RH
+
 """
 
 from datetime import datetime
