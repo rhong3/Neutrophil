@@ -35,7 +35,7 @@ HYPERPARAMS = {
     "learning_rate": 1E-4
 }
 
-MAX_ITER = 2 ** 18
+MAX_ITER = 2 ** 16
 MAX_EPOCHS = np.inf
 
 LOG_DIR = "../Neutrophil/{}".format(dirr)

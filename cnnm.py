@@ -196,9 +196,8 @@ class INCEPTION():
                     print("------- Training end: {} -------\n".format(now), flush=True)
 
                     if save:
-                        outfile = os.path.join(os.path.abspath(outdir), "inception3_{}".format(
-                            self.datetime, "_".join(['dropout', str(self.dropout)])))
-                        saver.save(self.sesh, outfile, global_step=self.step)
+                        outfile = os.path.join(os.path.abspath(outdir), "inception3_{}".format("_".join(['dropout', str(self.dropout)])))
+                        saver.save(self.sesh, outfile, global_step=None)
                     try:
                         self.train_logger.flush()
                         self.train_logger.close()
@@ -218,7 +217,7 @@ class INCEPTION():
 
             if save:
                 outfile = os.path.join(os.path.abspath(outdir), "inception3_{}".format("_".join(['dropout', str(self.dropout)])))
-                saver.save(self.sesh, outfile, global_step=self.step)
+                saver.save(self.sesh, outfile, global_step=None)
             try:
                 self.train_logger.flush()
                 self.train_logger.close()
