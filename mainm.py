@@ -104,7 +104,7 @@ def metrics(pdx, tl, path, name):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic example')
+    plt.title('ROC of {}'.format(name))
     plt.legend(loc="lower right")
     plt.savefig("../Neutrophil/{}/{}_ROC.png".format(path, name))
 
