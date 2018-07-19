@@ -6,14 +6,17 @@ Created on Wed Jun 14 16:15:18 2017
 @author: lwk
 modified by RH
 """
-
+import matplotlib
+matplotlib.use('Agg')
 import os
 import sys
-
 import numpy as np
 import tensorflow as tf
 import HE_data_input
 import cnnm
+import pandas as pd
+import sklearn as skl
+import matplotlib.pyplot as plt
 
 num = sys.argv[1]
 dirr = sys.argv[2]
@@ -27,12 +30,12 @@ INPUT_DIM = [IMG_DIM ** 2 * 3,  # Default input for INCEPTION_V3 network, 299*29
              IMG_DIM, IMG_DIM]
 
 HYPERPARAMS = {
-    "batch_size": 1,
+    "batch_size": 128,
     "dropout": 0.8,
-    "learning_rate": 1E-3
+    "learning_rate": 1E-4
 }
 
-MAX_ITER = 2 ** 16
+MAX_ITER = 2 ** 18
 MAX_EPOCHS = np.inf
 
 LOG_DIR = "../Neutrophil/{}".format(dirr)
@@ -78,18 +81,47 @@ def load_HE_data(train_dat_name, train_lab_name, valid_dat_name, valid_lab_name)
     return data_sets
 
 
+def metrics(pdx, tl, path, name):
+    pdx = np.asmatrix(pdx)
+
+    prl = (pdx[:,1] > 0.5).astype('uint8')
+    prl = pd.DataFrame(prl, columns = ['Prediction'])
+    out = pd.DataFrame(pdx, columns = ['neg_score', 'pos_score'])
+    outtl = pd.DataFrame(tl, columns = ['True_label'])
+    out = pd.concat([out,prl,outtl], join='outer')
+    out.to_csv("../Neutrophil/{}/{}.csv".format(path, name), headers=0, index=False)
+
+    y_score = pdx[:,1]
+    auc = skl.metrics.roc_auc_score(tl, y_score)
+    print('ROC-AUC:')
+    print(skl.metrics.roc_auc_score(tl, y_score))
+    fpr, tpr, _ = skl.metrics.roc_curve(tl, y_score)
+    plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic example')
+    plt.legend(loc="lower right")
+    plt.savefig("../Neutrophil/{}/{}_ROC.png".format(path, name))
+
+
 def main(to_reload=None, test=None):
     dat_f = '../Neutrophil/{}_Tiles_final/slide{}_data_{}.txt'.format(trn, trn, num)
 
     lab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab_{}.txt'.format(trn, trn, num)
 
-    vdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data.txt'.format(vln, vln)
+    vdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data_1.txt'.format(vln, vln)
 
-    vlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab.txt'.format(vln, vln)
+    vlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab_1.txt'.format(vln, vln)
 
-    tdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data.txt'.format(ttt, ttt)
+    tdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data_1.txt'.format(ttt, ttt)
 
-    tlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab.txt'.format(ttt, ttt)
+    tlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab_1.txt'.format(ttt, ttt)
 
 
     HE = load_HE_data(train_dat_name=dat_f,
@@ -110,15 +142,20 @@ def main(to_reload=None, test=None):
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
 
+        x, y = HE.train.next_batch(HE.train._num_examples)
+        print('Generating metrics')
+        tr = m.inference(x)
+        metrics(tr, y, dirr, 'Train_{}'.format(num))
+
         x, y = HE.validation.next_batch(HE.validation._num_examples)
         print('Validation:')
-        print(m.inference(x))
-        print(y)
+        va = m.inference(x)
+        metrics(va, y, dirr, 'Validation')
 
         x, y = HET.validation.next_batch(HET.validation._num_examples)
         print('Test:')
-        print(m.inference(x))
-        print(y)
+        te = m.inference(x)
+        metrics(te, y, dirr, 'Test')
 
     elif test:  # restore
 
@@ -127,8 +164,8 @@ def main(to_reload=None, test=None):
 
         x, y = HET.validation.next_batch(HET.validation._num_examples)
         print('Test:')
-        print(m.inference(x))
-        print(y)
+        te = m.inference(x)
+        metrics(te, y, dirr, 'Test')
 
 
     else:  # train
@@ -138,15 +175,20 @@ def main(to_reload=None, test=None):
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
         print("Trained!", flush=True)
 
+        x, y = HE.train.next_batch(HE.train._num_examples)
+        print('Generating metrics')
+        tr = m.inference(x)
+        metrics(tr, y, dirr, 'Train_{}'.format(num))
+
         x, y = HE.validation.next_batch(HE.validation._num_examples)
         print('Validation:')
-        print(m.inference(x))
-        print(y)
+        va = m.inference(x)
+        metrics(va, y, dirr, 'Validation')
 
         x, y = HET.validation.next_batch(HET.validation._num_examples)
         print('Test:')
-        print(m.inference(x))
-        print(y)
+        te = m.inference(x)
+        metrics(te, y, dirr, 'Test')
 
 
 if __name__ == "__main__":

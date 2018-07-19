@@ -3,17 +3,17 @@ Prepare pd from image tiles
 RH 0717
 '''
 
-
+slc = 76
 
 import os
 import pandas as pd
 import sklearn.utils as sku
 
 
-pos_path = '../Neutrophil/Tiles_final/pos'
-neg_path = '../Neutrophil/Tiles_final/neg'
-pos_pattern = '../Neutrophil/Tiles_final/pos/{}'
-neg_pattern = '../Neutrophil/Tiles_final/neg/{}'
+pos_path = '../Neutrophil/79_Tiles_final/pos'
+neg_path = '../Neutrophil/79_Tiles_final/neg'
+pos_pattern = '../Neutrophil/79_Tiles_final/pos/{}'
+neg_pattern = '../Neutrophil/79_Tiles_final/neg/{}'
 
 
 def image_ids_in(root_dir, ignore=['.DS_Store']):
@@ -54,6 +54,6 @@ def samplesum():
 
 tot, pos, neg = samplesum()
 
-tot.to_csv('../Neutrophil/Tiles_final/tot_sample.csv', index = False)
-pos.to_csv('../Neutrophil/Tiles_final/pos_sample.csv', index = False)
-neg.to_csv('../Neutrophil/Tiles_final/neg_sample.csv', index = False)
+tot.to_csv('../Neutrophil/79_Tiles_final/tot_sample.csv', index = False)
+pos.to_csv('../Neutrophil/79_Tiles_final/pos_sample.csv', index = False)
+neg.to_csv('../Neutrophil/79_Tiles_final/neg_sample.csv', index = False)
