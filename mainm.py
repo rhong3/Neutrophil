@@ -59,8 +59,8 @@ def loader(totlist_dir):
             tile_lab = []
             f += 1
         elif index == len(totlist['label']) - 1:
-            np.savetxt(LOG_DIR + '/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
-            np.savetxt(LOG_DIR + '/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
+            np.savetxt(LOG_DIR + '/data_test.txt', dat, fmt='%i', delimiter='\t')
+            np.savetxt(LOG_DIR + '/lab_test.txt', tile_lab, fmt='%i', delimiter='\t')
             dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
             tile_lab = []
             f += 1
