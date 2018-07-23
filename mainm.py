@@ -20,6 +20,8 @@ from PIL import Image
 
 num = sys.argv[1]
 dirr = sys.argv[2]
+bs = sys.argv[3]
+iter = sys.argv[4]
 
 IMG_DIM = 299
 
@@ -27,12 +29,12 @@ INPUT_DIM = [IMG_DIM ** 2 * 3,  # Default input for INCEPTION_V3 network, 299*29
              IMG_DIM, IMG_DIM]
 
 HYPERPARAMS = {
-    "batch_size": 128,
+    "batch_size": bs,
     "dropout": 0.8,
     "learning_rate": 1E-4
 }
 
-MAX_ITER = 2 ** 8
+MAX_ITER = iter
 MAX_EPOCHS = np.inf
 
 img_dir = '../Neutrophil/All_Tiles_final/tot_sample.csv'
@@ -51,14 +53,14 @@ def loader(totlist_dir):
         dat = np.vstack([dat, pix.flatten()])
         tile_lab.append(row['label'])
         if len(tile_lab) == 5000 and index != len(totlist['label']) - 1:
-            np.savetxt('../Neutrophil/All_Tiles_final/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
-            np.savetxt('../Neutrophil/All_Tiles_final/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
+            np.savetxt(LOG_DIR + '/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
+            np.savetxt(LOG_DIR + '/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
             dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
             tile_lab = []
             f += 1
         elif index == len(totlist['label']) - 1:
-            np.savetxt('../Neutrophil/All_Tiles_final/data_test.txt', dat, fmt='%i', delimiter='\t')
-            np.savetxt('../Neutrophil/All_Tiles_final/lab_test.txt', tile_lab, fmt='%i', delimiter='\t')
+            np.savetxt(LOG_DIR + '/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
+            np.savetxt(LOG_DIR + '/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
             dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
             tile_lab = []
             f += 1
@@ -133,13 +135,13 @@ def metrics(pdx, tl, path, name):
 
 
 def main(to_reload=None, test=None, log_dir=None):
-    dat_f = '../Neutrophil/All_Tiles_final/data_{}.txt'.format(num)
+    dat_f = LOG_DIR + '/data_{}.txt'.format(num)
 
-    lab_f = '../Neutrophil/All_Tiles_final/lab_{}.txt'.format(num)
+    lab_f = LOG_DIR + '/lab_{}.txt'.format(num)
 
-    tdat_f = '../Neutrophil/All_Tiles_final/data_test.txt'
+    tdat_f = LOG_DIR + '/data_test.txt'
 
-    tlab_f = '../Neutrophil/All_Tiles_final/lab_test.txt'
+    tlab_f = LOG_DIR + '/lab_test.txt'
 
 
     HE = load_HE_data(train_dat_name=dat_f,
@@ -209,7 +211,7 @@ if __name__ == "__main__":
             pass
 
     try:
-        to_reload = sys.argv[3]
+        to_reload = sys.argv[5]
         main(to_reload=to_reload, log_dir=LOG_DIR)
     except(IndexError):
         loader(img_dir)
