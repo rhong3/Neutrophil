@@ -20,9 +20,6 @@ from PIL import Image
 
 num = sys.argv[1]
 dirr = sys.argv[2]
-trn = sys.argv[3]
-vln = sys.argv[4]
-ttt = sys.argv[5]
 
 IMG_DIM = 299
 
@@ -212,7 +209,7 @@ if __name__ == "__main__":
             pass
 
     try:
-        to_reload = sys.argv[6]
+        to_reload = sys.argv[3]
         main(to_reload=to_reload, log_dir=LOG_DIR)
     except(IndexError):
         loader(img_dir)
