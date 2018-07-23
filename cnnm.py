@@ -43,8 +43,8 @@ class INCEPTION():
         if meta_graph:  # load saved graph
             model_name = os.path.basename(meta_graph)
             meta_graph = os.path.abspath(meta_graph)
-            tf.train.import_meta_graph(meta_graph + ".meta").restore(
-                self.sesh, meta_graph)
+            tf.train.import_meta_graph(log_dir + '/' + model_name +'.meta').restore(
+                self.sesh, log_dir + '/' + model_name)
             handles = self.sesh.graph.get_collection(INCEPTION.RESTORE_KEY)
 
 
@@ -169,6 +169,10 @@ class INCEPTION():
                     # print("round {} --> avg cost: ".format(i), err_train / i, flush=True)
                     print("round {} --> cost: ".format(i), cost, flush=True)
 
+                elif i == max_iter - 1 and verbose:
+                    print("round {} --> cost: ".format(i), cost, flush=True)
+
+
                 if i % 1000 == 0 and verbose:  # and i >= 10000:
 
                     if cross_validate:
@@ -180,6 +184,21 @@ class INCEPTION():
                         self.valid_logger.add_summary(valid_summary, i)
 
                         print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
+                        print(valid_summary)
+
+                elif i == max_iter - 1 and verbose:  # and i >= 10000:
+
+                    if cross_validate:
+                        x, y = X.validation.next_batch(self.batch_size)
+                        feed_dict = {self.x_in: x, self.y_in: y}
+                        fetches = [self.pred_cost, self.merged_summary]
+                        valid_cost, valid_summary = self.sesh.run(fetches, feed_dict)
+
+                        self.valid_logger.add_summary(valid_summary, i)
+
+                        print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
+                        print(valid_summary)
+
 
                 """    
                 if i%50000 == 0 and save:

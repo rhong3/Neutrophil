@@ -16,6 +16,7 @@ import cnnm
 import pandas as pd
 import sklearn as skl
 import matplotlib.pyplot as plt
+from PIL import Image
 
 num = sys.argv[1]
 dirr = sys.argv[2]
@@ -37,8 +38,33 @@ HYPERPARAMS = {
 MAX_ITER = 2 ** 8
 MAX_EPOCHS = np.inf
 
+img_dir = '../Neutrophil/All_Tiles_final/tot_sample.csv'
 LOG_DIR = "../Neutrophil/{}".format(dirr)
 METAGRAPH_DIR = "../Neutrophil/{}".format(dirr)
+
+
+def loader(totlist_dir):
+    dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
+    tile_lab = []
+    totlist = pd.read_csv(totlist_dir, header=0)
+    f = 1
+    for index, row in totlist.iterrows():
+        image = Image.open(row['path'])
+        pix = np.array(image)[:, :, 0:3]
+        dat = np.vstack([dat, pix.flatten()])
+        tile_lab.append(row['label'])
+        if len(tile_lab) == 5000 and index != len(totlist['label']) - 1:
+            np.savetxt('../Neutrophil/All_Tiles_final/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
+            np.savetxt('../Neutrophil/All_Tiles_final/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
+            dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
+            tile_lab = []
+            f += 1
+        elif index == len(totlist['label']) - 1:
+            np.savetxt('../Neutrophil/All_Tiles_final/data_test.txt', dat, fmt='%i', delimiter='\t')
+            np.savetxt('../Neutrophil/All_Tiles_final/lab_test.txt', tile_lab, fmt='%i', delimiter='\t')
+            dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
+            tile_lab = []
+            f += 1
 
 
 # to_load =
@@ -87,8 +113,8 @@ def metrics(pdx, tl, path, name):
     prl = pd.DataFrame(prl, columns = ['Prediction'])
     out = pd.DataFrame(pdx, columns = ['neg_score', 'pos_score'])
     outtl = pd.DataFrame(tl, columns = ['True_label'])
-    out = pd.concat([out,prl,outtl], join='outer')
-    out.to_csv("../Neutrophil/{}/{}.csv".format(path, name), headers=0, index=False)
+    out = pd.concat([out,prl,outtl], axis=1)
+    out.to_csv("../Neutrophil/{}/{}.csv".format(path, name), index=False)
 
     y_score = pdx[:,1]
     auc = skl.metrics.roc_auc_score(tl, y_score)
@@ -109,24 +135,20 @@ def metrics(pdx, tl, path, name):
     plt.savefig("../Neutrophil/{}/{}_ROC.png".format(path, name))
 
 
-def main(to_reload=None, test=None):
-    dat_f = '../Neutrophil/{}_Tiles_final/slide{}_data_{}.txt'.format(trn, trn, num)
+def main(to_reload=None, test=None, log_dir=None):
+    dat_f = '../Neutrophil/All_Tiles_final/data_{}.txt'.format(num)
 
-    lab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab_{}.txt'.format(trn, trn, num)
+    lab_f = '../Neutrophil/All_Tiles_final/lab_{}.txt'.format(num)
 
-    vdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data_1.txt'.format(vln, vln)
+    tdat_f = '../Neutrophil/All_Tiles_final/data_test.txt'
 
-    vlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab_1.txt'.format(vln, vln)
-
-    tdat_f = '../Neutrophil/{}_Tiles_final/slide{}_data_1.txt'.format(ttt, ttt)
-
-    tlab_f = '../Neutrophil/{}_Tiles_final/slide{}_lab_1.txt'.format(ttt, ttt)
+    tlab_f = '../Neutrophil/All_Tiles_final/lab_test.txt'
 
 
     HE = load_HE_data(train_dat_name=dat_f,
                       train_lab_name=lab_f,
-                      valid_dat_name=vdat_f,
-                      valid_lab_name=vlab_f)
+                      valid_dat_name=dat_f,
+                      valid_lab_name=lab_f)
 
 
     HET = load_HE_data(train_dat_name=dat_f,
@@ -136,20 +158,15 @@ def main(to_reload=None, test=None):
 
 
     if to_reload:
-        m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         print("Loaded!", flush=True)
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
 
-        x, y = HE.train.next_batch(HE.train._num_examples)
+        x, y = HE.train.next_batch(1024)
         print('Generating metrics')
         tr = m.inference(x)
         metrics(tr, y, dirr, 'Train_{}'.format(num))
-
-        x, y = HE.validation.next_batch(HE.validation._num_examples)
-        print('Validation:')
-        va = m.inference(x)
-        metrics(va, y, dirr, 'Validation')
 
         x, y = HET.validation.next_batch(HET.validation._num_examples)
         print('Test:')
@@ -174,15 +191,10 @@ def main(to_reload=None, test=None):
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
         print("Trained!", flush=True)
 
-        x, y = HE.train.next_batch(HE.train._num_examples)
-        print('Generating metrics')
+        x, y = HE.train.next_batch(1024)
+        print('Generating training metrics')
         tr = m.inference(x)
         metrics(tr, y, dirr, 'Train_{}'.format(num))
-
-        x, y = HE.validation.next_batch(HE.validation._num_examples)
-        print('Validation:')
-        va = m.inference(x)
-        metrics(va, y, dirr, 'Validation')
 
         x, y = HET.validation.next_batch(HET.validation._num_examples)
         print('Test:')
@@ -201,6 +213,7 @@ if __name__ == "__main__":
 
     try:
         to_reload = sys.argv[6]
-        main(to_reload=to_reload)
+        main(to_reload=to_reload, log_dir=LOG_DIR)
     except(IndexError):
+        loader(img_dir)
         main()
