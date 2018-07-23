@@ -22,6 +22,8 @@ num = sys.argv[1]
 dirr = sys.argv[2]
 bs = sys.argv[3]
 iter = sys.argv[4]
+bs = int(bs)
+iter = int(iter)
 
 IMG_DIM = 299
 
