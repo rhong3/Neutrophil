@@ -133,6 +133,22 @@ def metrics(pdx, tl, path, name):
     plt.legend(loc="lower right")
     plt.savefig("../Neutrophil/{}/{}_ROC.png".format(path, name))
 
+    average_precision = skl.metrics.average_precision_score(tl, y_score)
+    print('Average precision-recall score: {0:0.2f}'.format(average_precision))
+    plt.figure()
+    precision, recall, _ = skl.metrics.precision_recall_curve(tl, y_score)
+    plt.step(recall, precision, color='b', alpha=0.2,
+             where='post')
+    plt.fill_between(recall, precision, step='post', alpha=0.2,
+                     color='b')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title('2-class Precision-Recall curve: AP={0:0.2f}'.format(
+        average_precision))
+    plt.savefig("../Neutrophil/{}/{}_PRC.png".format(path, name))
+
 
 def main(to_reload=None, test=None, log_dir=None):
     dat_f = LOG_DIR + '/data_{}.txt'.format(num)
