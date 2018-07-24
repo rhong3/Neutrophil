@@ -38,7 +38,7 @@ class INCEPTION():
 
         self.input_dim = input_dim
         self.__dict__.update(INCEPTION.DEFAULTS, **d_hyperparams)
-        self.sesh = tf.Session()
+        self.sesh = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
         if meta_graph:  # load saved graph
             model_name = os.path.basename(meta_graph)

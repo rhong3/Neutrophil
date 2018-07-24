@@ -243,3 +243,4 @@ if __name__ == "__main__":
         if not os.path.isfile(data_dir + '/lab_test.txt'):
             loader(img_dir)
         main()
+
