@@ -169,7 +169,7 @@ class INCEPTION():
                     # print("round {} --> avg cost: ".format(i), err_train / i, flush=True)
                     print("round {} --> cost: ".format(i), cost, flush=True)
 
-                elif i == max_iter - 1 and verbose:
+                elif i == max_iter and verbose:
                     print("round {} --> cost: ".format(i), cost, flush=True)
 
 
@@ -186,7 +186,7 @@ class INCEPTION():
                         print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
                         print(valid_summary)
 
-                elif i == max_iter - 1 and verbose:  # and i >= 10000:
+                elif i == max_iter and verbose:  # and i >= 10000:
 
                     if cross_validate:
                         x, y = X.validation.next_batch(self.batch_size)
