@@ -42,6 +42,8 @@ MAX_EPOCHS = np.inf
 img_dir = '../Neutrophil/All_Tiles_final/tot_sample.csv'
 LOG_DIR = "../Neutrophil/{}".format(dirr)
 METAGRAPH_DIR = "../Neutrophil/{}".format(dirr)
+data_dir = "../Neutrophil/{}/data".format(dirr)
+out_dir = "../Neutrophil/{}/out".format(dirr)
 
 
 def loader(totlist_dir):
@@ -55,14 +57,14 @@ def loader(totlist_dir):
         dat = np.vstack([dat, pix.flatten()])
         tile_lab.append(row['label'])
         if len(tile_lab) == 5000 and index != len(totlist['label']) - 1:
-            np.savetxt(LOG_DIR + '/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
-            np.savetxt(LOG_DIR + '/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
+            np.savetxt(data_dir + '/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
+            np.savetxt(data_dir + '/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
             dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
             tile_lab = []
             f += 1
         elif index == len(totlist['label']) - 1:
-            np.savetxt(LOG_DIR + '/data_test.txt', dat, fmt='%i', delimiter='\t')
-            np.savetxt(LOG_DIR + '/lab_test.txt', tile_lab, fmt='%i', delimiter='\t')
+            np.savetxt(data_dir + '/data_test.txt', dat, fmt='%i', delimiter='\t')
+            np.savetxt(data_dir + '/lab_test.txt', tile_lab, fmt='%i', delimiter='\t')
             dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
             tile_lab = []
             f += 1
@@ -115,7 +117,14 @@ def metrics(pdx, tl, path, name):
     out = pd.DataFrame(pdx, columns = ['neg_score', 'pos_score'])
     outtl = pd.DataFrame(tl, columns = ['True_label'])
     out = pd.concat([out,prl,outtl], axis=1)
-    out.to_csv("../Neutrophil/{}/{}.csv".format(path, name), index=False)
+    out.to_csv("../Neutrophil/{}/out/{}.csv".format(path, name), index=False)
+    accu = 0
+    tott = out.shape[0]
+    for idx, row in out.iterrow():
+        if row['Prediction'] == row['True_label']:
+            accu += 1
+    accur = np.around(accu/tott, 3).round(3)
+
 
     y_score = pdx[:,1]
     auc = skl.metrics.roc_auc_score(tl, y_score)
@@ -133,7 +142,7 @@ def metrics(pdx, tl, path, name):
     plt.ylabel('True Positive Rate')
     plt.title('ROC of {}'.format(name))
     plt.legend(loc="lower right")
-    plt.savefig("../Neutrophil/{}/{}_ROC.png".format(path, name))
+    plt.savefig("../Neutrophil/{}/out/{}_ROC.png".format(path, name))
 
     average_precision = skl.metrics.average_precision_score(tl, y_score)
     print('Average precision-recall score: {0:0.2f}'.format(average_precision))
@@ -147,19 +156,18 @@ def metrics(pdx, tl, path, name):
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('2-class Precision-Recall curve: AP={0:0.2f}'.format(
-        average_precision))
-    plt.savefig("../Neutrophil/{}/{}_PRC.png".format(path, name))
+    plt.title('{} Precision-Recall curve: AP={0:0.2f}; Accu={}'.format(name, average_precision, accur))
+    plt.savefig("../Neutrophil/{}/out/{}_PRC.png".format(path, name))
 
 
 def main(to_reload=None, test=None, log_dir=None):
-    dat_f = LOG_DIR + '/data_{}.txt'.format(num)
+    dat_f = data_dir + '/data_{}.txt'.format(num)
 
-    lab_f = LOG_DIR + '/lab_{}.txt'.format(num)
+    lab_f = data_dir + '/lab_{}.txt'.format(num)
 
-    tdat_f = LOG_DIR + '/data_test.txt'
+    tdat_f = data_dir + '/data_test.txt'
 
-    tlab_f = LOG_DIR + '/lab_test.txt'
+    tlab_f = data_dir + '/lab_test.txt'
 
 
     HE = load_HE_data(train_dat_name=dat_f,
@@ -222,7 +230,7 @@ def main(to_reload=None, test=None, log_dir=None):
 if __name__ == "__main__":
     tf.reset_default_graph()
 
-    for DIR in (LOG_DIR, METAGRAPH_DIR):
+    for DIR in (LOG_DIR, METAGRAPH_DIR, data_dir, out_dir):
         try:
             os.mkdir(DIR)
         except(FileExistsError):
@@ -232,5 +240,6 @@ if __name__ == "__main__":
         to_reload = sys.argv[5]
         main(to_reload=to_reload, log_dir=LOG_DIR)
     except(IndexError):
-        loader(img_dir)
+        if not os.path.isfile(data_dir + '/lab_test.txt'):
+            loader(img_dir)
         main()
