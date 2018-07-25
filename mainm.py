@@ -157,7 +157,7 @@ def metrics(pdx, tl, path, name):
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('{} Precision-Recall curve: AP={0:0.2f}; Accu={}'.format(name, average_precision, accur))
+    plt.title('{} Precision-Recall curve: AP={:0.2f}; Accu={}'.format(name, average_precision, accur))
     plt.savefig("../Neutrophil/{}/out/{}_PRC.png".format(path, name))
 
 
