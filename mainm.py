@@ -120,10 +120,11 @@ def metrics(pdx, tl, path, name):
     out.to_csv("../Neutrophil/{}/out/{}.csv".format(path, name), index=False)
     accu = 0
     tott = out.shape[0]
-    for idx, row in out.iterrow():
+    for idx, row in out.iterrows():
         if row['Prediction'] == row['True_label']:
             accu += 1
-    accur = np.around(accu/tott, 3).round(3)
+    accur = accu/tott
+    accur = round(accur,2)
 
 
     y_score = pdx[:,1]
