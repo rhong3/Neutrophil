@@ -197,7 +197,7 @@ def main(to_reload=None, test=None, log_dir=None):
         x, y = HET.validation.next_batch(HET.validation._num_examples)
         print('Test:')
         te = m.inference(x)
-        metrics(te, y, dirr, 'Test')
+        metrics(te, y, dirr, 'Test_{}'.format(num))
 
     elif test:  # restore
 
@@ -225,7 +225,7 @@ def main(to_reload=None, test=None, log_dir=None):
         x, y = HET.validation.next_batch(HET.validation._num_examples)
         print('Test:')
         te = m.inference(x)
-        metrics(te, y, dirr, 'Test')
+        metrics(te, y, dirr, 'Test_{}'.format(num))
 
 
 if __name__ == "__main__":
