@@ -195,7 +195,7 @@ def main(to_reload=None, test=None, log_dir=None):
         tr = m.inference(x)
         metrics(tr, y, dirr, 'Train_{}'.format(num))
 
-        x, y = HET.validation.next_batch(HET.validation._num_examples)
+        x, y = HET.validation.next_batch(1024)
         print('Test:')
         te = m.inference(x)
         metrics(te, y, dirr, 'Test_{}'.format(num))
@@ -205,7 +205,7 @@ def main(to_reload=None, test=None, log_dir=None):
         m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         print("Loaded! Ready for test!", flush=True)
 
-        x, y = HET.validation.next_batch(HET.validation._num_examples)
+        x, y = HET.validation.next_batch(1024)
         print('Test:')
         te = m.inference(x)
         metrics(te, y, dirr, 'Test')
@@ -223,7 +223,7 @@ def main(to_reload=None, test=None, log_dir=None):
         tr = m.inference(x)
         metrics(tr, y, dirr, 'Train_{}'.format(num))
 
-        x, y = HET.validation.next_batch(HET.validation._num_examples)
+        x, y = HET.validation.next_batch(1024)
         print('Test:')
         te = m.inference(x)
         metrics(te, y, dirr, 'Test_{}'.format(num))
