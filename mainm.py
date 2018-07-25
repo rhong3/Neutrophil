@@ -125,7 +125,8 @@ def metrics(pdx, tl, path, name):
             accu += 1
     accur = accu/tott
     accur = round(accur,2)
-
+    print('Accuracy:')
+    print(accur)
 
     y_score = pdx[:,1]
     auc = skl.metrics.roc_auc_score(tl, y_score)
