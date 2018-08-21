@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Contains the definition for inception v3 classification network."""
+"""Modified by RH 2018.08.21"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -491,6 +492,10 @@ def inception_v3(inputs,
           inputs, scope=scope, min_depth=min_depth,
           depth_multiplier=depth_multiplier)
 
+      """ ADDED """
+      nett=net
+      """ ADDED """
+
       # Auxiliary Head logits
       if create_aux_logits and num_classes:
         with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d],
@@ -536,15 +541,31 @@ def inception_v3(inputs,
         net = slim.dropout(net, keep_prob=dropout_keep_prob, scope='Dropout_1b')
         end_points['PreLogits'] = net
         # 2048
-        logits = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
-                             normalizer_fn=None, scope='Conv2d_1c_1x1')
+
+        """ ADDED """
+        # logits = slim.conv2d(net, num_classes, [1, 1], activation_fn=None,
+        #                      normalizer_fn=None, scope='Conv2d_1c_1x1')
+        logits = slim.fully_connected(net, num_classes, activation_fn=None,
+                             normalizer_fn=None, scope='fc')
+        w_variables = slim.get_model_variables()[-2]
+        """ ADDED """
+
         if spatial_squeeze:
           logits = tf.squeeze(logits, [1, 2], name='SpatialSqueeze')
         # 1000
-      end_points['Logits'] = logits
-      end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
-  return logits, end_points
+
+      """ ADDED """
+      # end_points['Logits'] = logits
+      # end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
+      """ ADDED """
+
+  return logits, nett, w_variables
+
+
 inception_v3.default_image_size = 299
+
+
+
 
 
 def _reduced_kernel_size_for_small_input(input_tensor, kernel_size):
