@@ -56,7 +56,7 @@ class INCEPTION():
             self.sesh.run(tf.global_variables_initializer())
 
         # unpack handles for tensor ops to feed or fetch for lower layers
-        (self.x_in, self.dropout, self.is_train,
+        (self.x_in, self.dropout_, self.is_train,
          self.y_in, self.logits, self.net, self.w, self.pred, self.pred_cost,
          self.global_step, self.train_op, self.merged_summary) = handles
 
@@ -91,7 +91,7 @@ class INCEPTION():
 
         is_train = tf.placeholder_with_default(True, shape=[], name="is_train")
 
-        logits, net, w = inception_v3.inception_v3(x_in_reshape,
+        logits, nett, ww = inception_v3.inception_v3(x_in_reshape,
                                               num_classes=2,
                                               is_training=is_train,
                                               dropout_keep_prob=dropout,
@@ -122,7 +122,7 @@ class INCEPTION():
         merged_summary = tf.summary.merge_all()
 
         return (x_in, dropout, is_train,
-                y_in, logits, net, w, pred, pred_cost,
+                y_in, logits, nett, ww, pred, pred_cost,
                 global_step, train_op, merged_summary)
 
     def inference(self, x, train_status=False):
