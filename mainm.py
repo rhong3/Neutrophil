@@ -17,6 +17,7 @@ import pandas as pd
 import sklearn as skl
 import matplotlib.pyplot as plt
 from PIL import Image
+import cv2
 
 num = sys.argv[1]
 dirr = sys.argv[2]
@@ -162,6 +163,76 @@ def metrics(pdx, tl, path, name):
     plt.savefig("../Neutrophil/{}/out/{}_PRC.png".format(path, name))
 
 
+def py_returnCAMmap(activation, weights_LR):
+#     print(activation.shape)
+#     print(weights_LR.shape)
+    n_feat, w, h, n= activation.shape
+    act_vec = np.reshape(activation, [n_feat, w*h])
+    n_top = weights_LR.shape[0]
+    out = np.zeros([w, h, n_top])
+
+    for t in range(n_top):
+        weights_vec = np.reshape(weights_LR[t], [1, weights_LR[t].shape[0]])
+        heatmap_vec = np.dot(weights_vec,act_vec)
+        heatmap = np.reshape( np.squeeze(heatmap_vec) , [w, h])
+        out[:,:,t] = heatmap
+
+    return out
+
+
+def im2double(im):
+    return cv2.normalize(im.astype('float'), None, 0.0, 1.0, cv2.NORM_MINMAX)
+
+
+def py_map2jpg(imgmap, rang, colorMap):
+    if rang is None:
+        rang = [np.min(imgmap), np.max(imgmap)]
+
+    heatmap_x = np.round(imgmap*255).astype(np.uint8)
+
+    return cv2.applyColorMap(heatmap_x, cv2.COLORMAP_JET)
+
+
+def CAM(net, w, pred, x, y, path, name):
+    DIR = "../Neutrophil/{}/{}_posimg".format(path, name)
+    try:
+        os.mkdir(DIR)
+    except(FileExistsError):
+        pass
+
+    pdx = np.asmatrix(pred)
+
+    prl = (pdx[:,1] > 0.5).astype('uint8')
+
+    for ij in range(len(y)):
+        if prl[ij] == 0:
+            continue
+
+        else:
+            weights_LR = w
+            activation_lastconv = np.array([net[ij]])
+            weights_LR = weights_LR.T
+            activation_lastconv = activation_lastconv.T
+
+            topNum = 1  # generate heatmap for top X prediction results
+            scores = pred[ij]
+            scoresMean = np.mean(scores, axis=0)
+            ascending_order = np.argsort(scoresMean)
+            IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
+
+            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[y[ij].index(1)], :])
+            for kk in range(topNum):
+                curCAMmap_crops = curCAMmapAll[:, :, kk]
+                curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
+                curHeatMap = cv2.resize(im2double(curCAMmapLarge_crops), (299, 299))  # this line is not doing much
+                curHeatMap = im2double(curHeatMap)
+                curHeatMap = py_map2jpg(curHeatMap, None, 'jet')
+                image = cv2.resize(x[ij], (299, 299))
+                curHeatMap = im2double(image) * 0.2 + im2double(curHeatMap) * 0.7
+                imname = DIR + '/' + str(ij) + '.png'
+                cv2.imwrite(imname, curHeatMap)
+
+
 def main(to_reload=None, test=None, log_dir=None):
     dat_f = data_dir + '/data_{}.txt'.format(num)
 
@@ -192,12 +263,14 @@ def main(to_reload=None, test=None, log_dir=None):
 
         x, y = HE.train.next_batch(1024)
         print('Generating metrics')
-        tr = m.inference(x)
+        tr, trnet, trw = m.inference(x)
+        CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(num))
         metrics(tr, y, dirr, 'Train_{}'.format(num))
 
         x, y = HET.validation.next_batch(1024)
         print('Test:')
-        te = m.inference(x)
+        te, tenet, tew = m.inference(x)
+        CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
         metrics(te, y, dirr, 'Test_{}'.format(num))
 
     elif test:  # restore
@@ -207,7 +280,8 @@ def main(to_reload=None, test=None, log_dir=None):
 
         x, y = HET.validation.next_batch(1024)
         print('Test:')
-        te = m.inference(x)
+        te, tenet, tew = m.inference(x)
+        CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
         metrics(te, y, dirr, 'Test')
 
 
@@ -220,12 +294,14 @@ def main(to_reload=None, test=None, log_dir=None):
 
         x, y = HE.train.next_batch(1024)
         print('Generating training metrics')
-        tr = m.inference(x)
+        tr, trnet, trw = m.inference(x)
+        CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(num))
         metrics(tr, y, dirr, 'Train_{}'.format(num))
 
         x, y = HET.validation.next_batch(1024)
         print('Test:')
-        te = m.inference(x)
+        te, tenet, tew = m.inference(x)
+        CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
         metrics(te, y, dirr, 'Test_{}'.format(num))
 
 

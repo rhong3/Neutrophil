@@ -58,7 +58,7 @@ class INCEPTION():
         # unpack handles for tensor ops to feed or fetch for lower layers
         (self.x_in, self.dropout_, self.is_train,
          self.y_in, self.logits, self.pred, self.pred_cost,
-         self.global_step, self.train_op, self.merged_summary) = handles
+         self.global_step, self.train_op, self.merged_summary, self.net, self.w) = handles
 
         # print(self.batch_size,flush=True)
         # print(self.learning_rate,flush=True)
@@ -91,7 +91,7 @@ class INCEPTION():
 
         is_train = tf.placeholder_with_default(True, shape=[], name="is_train")
 
-        logits, _ = inception_v3.inception_v3(x_in_reshape,
+        logits, nett, ww = inception_v3.inception_v3(x_in_reshape,
                                               num_classes=2,
                                               is_training=is_train,
                                               dropout_keep_prob=dropout,
@@ -122,12 +122,13 @@ class INCEPTION():
         merged_summary = tf.summary.merge_all()
 
         return (x_in, dropout, is_train,
-                y_in, logits, pred, pred_cost,
+                y_in, logits, nett, ww, pred, pred_cost,
                 global_step, train_op, merged_summary)
 
     def inference(self, x, train_status=False):
         feed_dict = {self.x_in: x, self.is_train: train_status}
-        return self.sesh.run(self.pred, feed_dict=feed_dict)
+        fetches = [self.pred, self.net, self.w]
+        return self.sesh.run(fetches, feed_dict=feed_dict)
 
     def train(self, X, max_iter=np.inf, max_epochs=np.inf, cross_validate=True,
               verbose=True, save=True, outdir="./out"):
@@ -249,3 +250,5 @@ class INCEPTION():
                 print('Not logging', flush=True)
 
             sys.exit(0)
+
+
