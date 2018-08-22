@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Contains the definition for inception v3 classification network."""
-"""Modified by RH 2018.08.21"""
+"""Contains the definition for inception v3 classification network. Modified by RH 2018.08.21"""
 
 from __future__ import absolute_import
 from __future__ import division
