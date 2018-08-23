@@ -219,17 +219,34 @@ def CAM(net, w, pred, x, y, path, name):
             scoresMean = np.mean(scores, axis=0)
             ascending_order = np.argsort(scoresMean)
             IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-            print(y[ij])
-            print(y[ij].tolist())
-            print(weights_LR)
-            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[y[ij]], :])
+            print(weights_LR.shape)
+            print(weights_LR[0, :])
+            print(weights_LR[[0], :])
+            print(weights_LR[[1], :])
+            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[1], :])
             for kk in range(topNum):
                 curCAMmap_crops = curCAMmapAll[:, :, kk]
                 curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
                 curHeatMap = cv2.resize(im2double(curCAMmapLarge_crops), (299, 299))  # this line is not doing much
                 curHeatMap = im2double(curHeatMap)
                 curHeatMap = py_map2jpg(curHeatMap, None, 'jet')
-                image = cv2.resize(x[ij], (299, 299))
+                print(x[ij].shape)
+                xim = x[ij].reshape(-1, 3)
+                print(xim.shape)
+                xim1 = xim[:, 0].reshape(-1, 299)
+                xim2 = xim[:, 1].reshape(-1, 299)
+                xim3 = xim[:, 2].reshape(-1, 299)
+                print(xim1.shape)
+                image = np.empty([299,299,3])
+                image[:, :, 0] = xim1
+                image[:, :, 1] = xim2
+                image[:, :, 2] = xim3
+                print(image.shape)
+                # image = cv2.resize(x[ij], (299, 299, 3))
+                a = im2double(image) * 0.2
+                b = im2double(curHeatMap) * 0.7
+                print(a.shape)
+                print(b.shape)
                 curHeatMap = im2double(image) * 0.2 + im2double(curHeatMap) * 0.7
                 imname = DIR + '/' + str(ij) + '.png'
                 cv2.imwrite(imname, curHeatMap)
@@ -297,6 +314,8 @@ def main(to_reload=None, test=None, log_dir=None):
         x, y = HE.train.next_batch(1024)
         print('Generating training metrics')
         tr, trnet, trw = m.inference(x)
+        print(trnet.shape)
+        print(trw.shape)
         CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(num))
         metrics(tr, y, dirr, 'Train_{}'.format(num))
 
