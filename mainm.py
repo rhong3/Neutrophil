@@ -220,7 +220,7 @@ def CAM(net, w, pred, x, y, path, name):
             ascending_order = np.argsort(scoresMean)
             IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
 
-            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[y[ij].index(1)], :])
+            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[y[ij].tolist().index(1)], :])
             for kk in range(topNum):
                 curCAMmap_crops = curCAMmapAll[:, :, kk]
                 curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
