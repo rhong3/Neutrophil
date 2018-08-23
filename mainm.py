@@ -164,9 +164,9 @@ def metrics(pdx, tl, path, name):
 
 
 def py_returnCAMmap(activation, weights_LR):
-#     print(activation.shape)
-#     print(weights_LR.shape)
-    n_feat, w, h, n= activation.shape
+    print(activation.shape)
+    print(weights_LR.shape)
+    n_feat, w, h, n = activation.shape
     act_vec = np.reshape(activation, [n_feat, w*h])
     n_top = weights_LR.shape[0]
     out = np.zeros([w, h, n_top])
@@ -194,7 +194,7 @@ def py_map2jpg(imgmap, rang, colorMap):
 
 
 def CAM(net, w, pred, x, y, path, name):
-    DIR = "../Neutrophil/{}/{}_posimg".format(path, name)
+    DIR = "../Neutrophil/{}/out/{}_posimg".format(path, name)
     try:
         os.mkdir(DIR)
     except(FileExistsError):
@@ -219,7 +219,7 @@ def CAM(net, w, pred, x, y, path, name):
             scoresMean = np.mean(scores, axis=0)
             ascending_order = np.argsort(scoresMean)
             IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-
+            print(y[ij].tolist().index(1))
             curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[y[ij].tolist().index(1)], :])
             for kk in range(topNum):
                 curCAMmap_crops = curCAMmapAll[:, :, kk]
