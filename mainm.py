@@ -219,9 +219,9 @@ def CAM(net, w, pred, x, y, path, name):
             scoresMean = np.mean(scores, axis=0)
             ascending_order = np.argsort(scoresMean)
             IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-            print(weights_LR.shape)
-            print(weights_LR[[0], :])
-            print(weights_LR[[1], :])
+            # print(weights_LR.shape)
+            # print(weights_LR[[0], :])
+            # print(weights_LR[[1], :])
             curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[1], :])
             for kk in range(topNum):
                 curCAMmap_crops = curCAMmapAll[:, :, kk]
@@ -238,11 +238,9 @@ def CAM(net, w, pred, x, y, path, name):
                 image[:, :, 1] = xim2
                 image[:, :, 2] = xim3
                 # image = cv2.resize(x[ij], (299, 299, 3))
-                a = im2double(image)
-                b = im2double(curHeatMap)
-                print(a.shape)
-                print(b.shape)
-                curHeatMap = im2double(image) * 0.2 + im2double(curHeatMap) * 0.7
+                a = im2double(image) * 255
+                b = im2double(curHeatMap) * 255
+                curHeatMap = a * 0.5 + b * 0.5
                 imname = DIR + '/' + str(ij) + '.png'
                 imname1 = DIR + '/' + str(ij) + 'img.png'
                 imname2 = DIR + '/' + str(ij) + 'hm.png'
