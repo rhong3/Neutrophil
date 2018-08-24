@@ -207,6 +207,11 @@ def CAM(net, w, pred, x, y, path, name):
             continue
 
         else:
+            if y[ij] == 1:
+                ddt = 'Correct'
+            else:
+                ddt = 'Wrong'
+
             weights_LR = w
             activation_lastconv = np.array([net[ij]])
             weights_LR = weights_LR.T
@@ -237,13 +242,13 @@ def CAM(net, w, pred, x, y, path, name):
                 curHeatMap = a * 0.6 + b * 0.4
                 ab = np.hstack((a,b))
                 full = np.hstack((curHeatMap, ab))
-                imname = DIR + '/' + str(ij) + '.png'
-                imname1 = DIR + '/' + str(ij) + '_img.png'
-                imname2 = DIR + '/' + str(ij) + '_hm.png'
-                imname3 = DIR + '/' + str(ij) + '_full.png'
-                cv2.imwrite(imname, curHeatMap)
-                cv2.imwrite(imname1, a)
-                cv2.imwrite(imname2, b)
+                # imname = DIR + '/' + ddt + str(ij) + '.png'
+                # imname1 = DIR + '/' + ddt + str(ij) + '_img.png'
+                # imname2 = DIR + '/' + ddt + str(ij) + '_hm.png'
+                imname3 = DIR + '/' + ddt + str(ij) + '_full.png'
+                # cv2.imwrite(imname, curHeatMap)
+                # cv2.imwrite(imname1, a)
+                # cv2.imwrite(imname2, b)
                 cv2.imwrite(imname3, full)
 
 
