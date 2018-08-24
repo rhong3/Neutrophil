@@ -164,8 +164,6 @@ def metrics(pdx, tl, path, name):
 
 
 def py_returnCAMmap(activation, weights_LR):
-    # print(activation.shape)
-    # print(weights_LR.shape)
     n_feat, w, h, n = activation.shape
     act_vec = np.reshape(activation, [n_feat, w*h])
     n_top = weights_LR.shape[0]
@@ -219,9 +217,6 @@ def CAM(net, w, pred, x, y, path, name):
             scoresMean = np.mean(scores, axis=0)
             ascending_order = np.argsort(scoresMean)
             IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-            # print(weights_LR.shape)
-            # print(weights_LR[[0], :])
-            # print(weights_LR[[1], :])
             curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[1], :])
             for kk in range(topNum):
                 curCAMmap_crops = curCAMmapAll[:, :, kk]
