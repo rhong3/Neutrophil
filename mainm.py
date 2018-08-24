@@ -164,8 +164,8 @@ def metrics(pdx, tl, path, name):
 
 
 def py_returnCAMmap(activation, weights_LR):
-    print(activation.shape)
-    print(weights_LR.shape)
+    # print(activation.shape)
+    # print(weights_LR.shape)
     n_feat, w, h, n = activation.shape
     act_vec = np.reshape(activation, [n_feat, w*h])
     n_top = weights_LR.shape[0]
@@ -237,16 +237,19 @@ def CAM(net, w, pred, x, y, path, name):
                 image[:, :, 0] = xim1
                 image[:, :, 1] = xim2
                 image[:, :, 2] = xim3
-                # image = cv2.resize(x[ij], (299, 299, 3))
                 a = im2double(image) * 255
                 b = im2double(curHeatMap) * 255
-                curHeatMap = a * 0.5 + b * 0.5
+                curHeatMap = a * 0.6 + b * 0.4
+                ab = np.hstack((a,b))
+                full = np.hstack((curHeatMap, ab))
                 imname = DIR + '/' + str(ij) + '.png'
-                imname1 = DIR + '/' + str(ij) + 'img.png'
-                imname2 = DIR + '/' + str(ij) + 'hm.png'
+                imname1 = DIR + '/' + str(ij) + '_img.png'
+                imname2 = DIR + '/' + str(ij) + '_hm.png'
+                imname3 = DIR + '/' + str(ij) + '_full.png'
                 cv2.imwrite(imname, curHeatMap)
                 cv2.imwrite(imname1, a)
                 cv2.imwrite(imname2, b)
+                cv2.imwrite(imname3, full)
 
 
 def main(to_reload=None, test=None, log_dir=None):
@@ -311,8 +314,6 @@ def main(to_reload=None, test=None, log_dir=None):
         x, y = HE.train.next_batch(1024)
         print('Generating training metrics')
         tr, trnet, trw = m.inference(x)
-        print(trnet.shape)
-        print(trw.shape)
         CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(num))
         metrics(tr, y, dirr, 'Train_{}'.format(num))
 
