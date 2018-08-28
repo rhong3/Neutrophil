@@ -111,7 +111,7 @@ def googlenet(inputs,
 
             end_points['pool4'] = layers.avg_pool2d(end_points['inception_5b'], [7, 7], stride=1, scope='pool4')
 
-            end_points['reshape'] = tf.reshape(end_points['pool4'], [-1, 128])
+            end_points['reshape'] = tf.reshape(end_points['pool4'], [-1, 16384])
 
             print(end_points['reshape'].shape)
 
