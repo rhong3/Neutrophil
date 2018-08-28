@@ -102,7 +102,7 @@ class INCEPTION():
                                               reuse=None,
                                               create_aux_logits=True,
                                               scope='InceptionV3',
-                                              global_pool=True)
+                                              global_pool=False)
 
         pred = tf.nn.softmax(logits, name="prediction")
 
