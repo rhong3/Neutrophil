@@ -115,12 +115,14 @@ def googlenet(inputs,
 
             end_points['dropout'] = layers.dropout(end_points['reshape'], dropout_keep_prob, is_training=is_training)
 
-            end_points['logits'] = layers.fully_connected(end_points['dropout'], num_classes, activation_fn=None,
+            end_points['prelogits'] = layers.fully_connected(end_points['dropout'], num_classes, activation_fn=None,
                                                           scope='logits')
 
-            with tf.variable_scope('Logits'):
+            with tf.variable_scope('preLogits'):
 
                 w_variables = slim.get_model_variables()[-2]
+
+            end_points['logits'] = tf.squeeze(end_points['prelogits'], [1, 2], name='SpatialSqueeze')
 
             end_points['predictions'] = tf.nn.softmax(end_points['logits'], name='predictions')
 
