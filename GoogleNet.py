@@ -1,6 +1,16 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import tensorflow as tf
+
+#from nets import inception_utils
+
+slim = tf.contrib.slim
 import tensorflow as tf
 import tensorflow.contrib.layers as layers
 import tensorflow.contrib.framework as ops
+
 
 
 def get_inception_layer(inputs, conv11_size, conv33_11_size, conv33_size,
@@ -40,11 +50,11 @@ def aux_logit_layer(inputs, num_classes, is_training):
 
 
 def googlenet(inputs,
-              dropout_keep_prob=0.4,
+              dropout_keep_prob=0.8,
               num_classes=1000,
               is_training=True,
               restore_logits=None,
-              scope=''):
+              scope='GoogleNet'):
     '''
     Implementation of https://arxiv.org/pdf/1409.4842.pdf
     '''
@@ -97,6 +107,8 @@ def googlenet(inputs,
                 end_points['inception_5b'] = get_inception_layer(end_points['inception_5a'], 384, 192, 384, 48, 128,
                                                                  128)
 
+            net = end_points['inception_5b']
+
             end_points['pool4'] = layers.avg_pool2d(end_points['inception_5b'], [7, 7], stride=1, scope='pool4')
 
             end_points['reshape'] = tf.reshape(end_points['pool4'], [-1, 1024])
@@ -106,6 +118,10 @@ def googlenet(inputs,
             end_points['logits'] = layers.fully_connected(end_points['dropout'], num_classes, activation_fn=None,
                                                           scope='logits')
 
+            with tf.variable_scope('Logits'):
+
+                w_variables = slim.get_model_variables()[-2]
+
             end_points['predictions'] = tf.nn.softmax(end_points['logits'], name='predictions')
 
-    return end_points['logits'], end_points
+    return end_points['logits'], net, w_variables

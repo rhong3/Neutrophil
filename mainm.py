@@ -13,16 +13,19 @@ import numpy as np
 import tensorflow as tf
 import HE_data_input
 import cnnm
+import cnng
 import pandas as pd
 import sklearn as skl
 import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
 
+
 num = sys.argv[1]
 dirr = sys.argv[2]
 bs = sys.argv[3]
 iter = sys.argv[4]
+md = sys.argv[5]
 bs = int(bs)
 iter = int(iter)
 
@@ -326,7 +329,10 @@ def main(to_reload=None, test=None, log_dir=None):
 
 
     if to_reload:
-        m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        if md == 'G':
+            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'I':
+            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         print("Loaded!", flush=True)
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
@@ -344,8 +350,10 @@ def main(to_reload=None, test=None, log_dir=None):
         metrics(te, y, dirr, 'Test_{}'.format(num))
 
     elif test:  # restore
-
-        m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        if md == 'G':
+            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        elif md == 'I':
+            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         print("Loaded! Ready for test!", flush=True)
 
         x, y = HET.validation.next_batch(1024)
@@ -357,7 +365,10 @@ def main(to_reload=None, test=None, log_dir=None):
 
     else:  # train
         """to try cont'd training, load data from previously saved meta graph"""
-        m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        if md == 'G':
+            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        elif md == 'I':
+            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
         print("Trained!", flush=True)
@@ -385,7 +396,7 @@ if __name__ == "__main__":
             pass
 
     try:
-        to_reload = sys.argv[5]
+        to_reload = sys.argv[6]
         main(to_reload=to_reload, log_dir=LOG_DIR)
     except(IndexError):
         if not os.path.isfile(data_dir + '/lab_test.txt'):
