@@ -111,18 +111,28 @@ def googlenet(inputs,
 
             end_points['pool4'] = layers.avg_pool2d(end_points['inception_5b'], [7, 7], stride=1, scope='pool4')
 
-            end_points['reshape'] = tf.reshape(end_points['pool4'], [-1, 1024])
+            end_points['reshape'] = tf.reshape(end_points['pool4'], [-1, 128])
+
+            print(end_points['reshape'].shape)
 
             end_points['dropout'] = layers.dropout(end_points['reshape'], dropout_keep_prob, is_training=is_training)
 
+            print(end_points['dropout'].shape)
+
             end_points['prelogits'] = layers.fully_connected(end_points['dropout'], num_classes, activation_fn=None,
                                                           scope='logits')
+
+            print(end_points['prelogits'].shape)
 
             with tf.variable_scope('preLogits'):
 
                 w_variables = slim.get_model_variables()[-2]
 
-            end_points['logits'] = tf.squeeze(end_points['prelogits'], [1, 2], name='SpatialSqueeze')
+            # end_points['logits'] = tf.squeeze(end_points['prelogits'], [1, 2], name='SpatialSqueeze')
+
+            end_points['logits'] = end_points['prelogits']
+
+            print(end_points['logits'].shape)
 
             end_points['predictions'] = tf.nn.softmax(end_points['logits'], name='predictions')
 
