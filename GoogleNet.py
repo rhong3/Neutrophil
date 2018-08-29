@@ -109,9 +109,11 @@ def googlenet(inputs,
 
             net = end_points['inception_5b']
 
-            end_points['pool4'] = layers.avg_pool2d(end_points['inception_5b'], [28, 28], stride=1, scope='pool4')
+            end_points['pool4'] = layers.avg_pool2d(end_points['inception_5b'], [7, 7], stride=1, scope='pool4')
 
-            end_points['reshape'] = tf.reshape(end_points['pool4'], [-1, 1024])
+            end_points['pool5'] = layers.avg_pool2d(end_points['pool4'], [4, 4], stride=1, scope='pool5')
+
+            end_points['reshape'] = tf.reshape(end_points['pool5'], [-1, 1024])
 
             end_points['dropout'] = layers.dropout(end_points['reshape'], dropout_keep_prob, is_training=is_training)
 
