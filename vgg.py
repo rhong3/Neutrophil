@@ -122,6 +122,9 @@ def vgg_a(inputs,
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                          scope='dropout6')
       net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
+
+      nett = net
+
       # Convert end_points_collection into a end_point dict.
       end_points = slim.utils.convert_collection_to_dict(end_points_collection)
       if global_pool:
@@ -130,14 +133,19 @@ def vgg_a(inputs,
       if num_classes:
         net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                            scope='dropout7')
-        net = slim.conv2d(net, num_classes, [1, 1],
-                          activation_fn=None,
-                          normalizer_fn=None,
-                          scope='fc8')
+        # net = slim.conv2d(net, num_classes, [1, 1],
+        #                   activation_fn=None,
+        #                   normalizer_fn=None,
+        #                   scope='fc8')
+
+        logits = slim.fully_connected(net, num_classes, activation_fn=None,
+                             normalizer_fn=None, scope='fc')
+        w_variables = slim.get_model_variables()[-2]
+
         if spatial_squeeze:
           net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
         end_points[sc.name + '/fc8'] = net
-      return net, end_points
+      return logits, nett, w_variables
 vgg_a.default_image_size = 224
 
 

@@ -13,7 +13,7 @@ import sys
 
 import numpy as np
 import tensorflow as tf
-import GoogleNet
+import vgg
 
 slim = tf.contrib.slim
 
@@ -91,11 +91,12 @@ class INCEPTION():
 
         is_train = tf.placeholder_with_default(True, shape=[], name="is_train")
 
-        logits, nett, ww = GoogleNet.googlenet(x_in_reshape,
+        logits, nett, ww = vgg.vgg_19(x_in_reshape,
                                               num_classes=2,
                                               is_training=is_train,
                                               dropout_keep_prob=dropout,
-                                              scope='GoogleNet')
+                                              spatial_squeeze=True,
+                                              scope='vgg19')
 
         pred = tf.nn.softmax(logits, name="prediction")
 

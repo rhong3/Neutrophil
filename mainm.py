@@ -14,6 +14,9 @@ import tensorflow as tf
 import HE_data_input
 import cnnm
 import cnng
+import cnnva
+import cnnv16
+import cnnv19
 import pandas as pd
 import sklearn as skl
 import matplotlib.pyplot as plt
@@ -333,6 +336,12 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I':
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'Va':
+            m = cnnva.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'V16':
+            m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'V19':
+            m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         print("Loaded!", flush=True)
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
@@ -354,6 +363,12 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         elif md == 'I':
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        elif md == 'Va':
+            m = cnnva.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        elif md == 'V16':
+            m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        elif md == 'V19':
+            m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         print("Loaded! Ready for test!", flush=True)
 
         x, y = HET.validation.next_batch(1024)
@@ -369,6 +384,12 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I':
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        elif md == 'Va':
+            m = cnnva.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        elif md == 'V16':
+            m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        elif md == 'V19':
+            m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
         print("Trained!", flush=True)
