@@ -13,7 +13,7 @@ import sys
 
 import numpy as np
 import tensorflow as tf
-import inception_v4
+import inception_resnet_v2
 
 slim = tf.contrib.slim
 
@@ -91,13 +91,13 @@ class INCEPTION():
 
         is_train = tf.placeholder_with_default(True, shape=[], name="is_train")
 
-        logits, nett, ww = inception_v4.inception_v4(x_in_reshape,
+        logits, nett, ww = inception_resnet_v2.inception_resnet_v2(x_in_reshape,
                                               num_classes=2,
                                               is_training=is_train,
                                               dropout_keep_prob=dropout,
                                               reuse=None,
                                               create_aux_logits=True,
-                                              scope='InceptionV4')
+                                              scope='InceptionRes2')
 
         pred = tf.nn.softmax(logits, name="prediction")
 

@@ -15,6 +15,8 @@ import HE_data_input
 import cnnm
 import cnng
 import cnni
+import cnnir1
+import cnnir2
 import pandas as pd
 import sklearn as skl
 import matplotlib.pyplot as plt
@@ -336,6 +338,11 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I4':
             m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'IR1':
+            m = cnnir1.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'IR2':
+            m = cnnir2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+
         print("Loaded!", flush=True)
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
@@ -359,6 +366,11 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         elif md == 'I4':
             m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        elif md == 'IR1':
+            m = cnnir1.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        elif md == 'IR2':
+            m = cnnir2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+
         print("Loaded! Ready for test!", flush=True)
 
         x, y = HET.validation.next_batch(1024)
@@ -376,6 +388,10 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I4':
             m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        elif md == 'IR1':
+            m = cnnir1.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        elif md == 'IR2':
+            m = cnnir2.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
         print("Trained!", flush=True)

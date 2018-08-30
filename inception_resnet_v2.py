@@ -319,6 +319,8 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
       net, end_points = inception_resnet_v2_base(inputs, scope=scope,
                                                  activation_fn=activation_fn)
 
+      nett = net
+
       if create_aux_logits and num_classes:
         with tf.variable_scope('AuxLogits'):
           aux = end_points['PreAuxLogits']
@@ -350,10 +352,12 @@ def inception_resnet_v2(inputs, num_classes=1001, is_training=True,
         end_points['PreLogitsFlatten'] = net
         logits = slim.fully_connected(net, num_classes, activation_fn=None,
                                       scope='Logits')
+        w_variables = slim.get_model_variables()[-2]
+
         end_points['Logits'] = logits
         end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
 
-    return logits, end_points
+    return logits, nett, w_variables
 inception_resnet_v2.default_image_size = 299
 
 

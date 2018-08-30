@@ -156,8 +156,8 @@ def inference(images, keep_probability, phase_train=True,
 
 
 def inception_resnet_v1(inputs, is_training=True,
+                        num_classes=1000,
                         dropout_keep_prob=0.8,
-                        bottleneck_layer_size=128,
                         reuse=None,
                         scope='InceptionResnetV1'):
     """Creates the Inception Resnet V1 model.
@@ -233,6 +233,8 @@ def inception_resnet_v1(inputs, is_training=True,
                 net = block8(net, activation_fn=None)
                 end_points['Mixed_8b'] = net
 
+                nett = net
+
                 with tf.variable_scope('Logits'):
                     end_points['PrePool'] = net
                     # pylint: disable=no-member
@@ -245,7 +247,9 @@ def inception_resnet_v1(inputs, is_training=True,
 
                     end_points['PreLogitsFlatten'] = net
 
-                net = slim.fully_connected(net, bottleneck_layer_size, activation_fn=None,
-                                           scope='Bottleneck', reuse=False)
+                logits = slim.fully_connected(net, num_classes, activation_fn=None,
+                                           scope='fc', reuse=False)
 
-    return net, end_points
+                w_variables = slim.get_model_variables()[-2]
+
+    return logits, nett, w_variables
