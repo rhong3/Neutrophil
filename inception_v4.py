@@ -287,6 +287,8 @@ def inception_v4(inputs, num_classes=1001, is_training=True,
                         is_training=is_training):
       net, end_points = inception_v4_base(inputs, scope=scope)
 
+      nett = net
+
       with slim.arg_scope([slim.conv2d, slim.max_pool2d, slim.avg_pool2d],
                           stride=1, padding='SAME'):
         # Auxiliary Head logits
@@ -330,9 +332,12 @@ def inception_v4(inputs, num_classes=1001, is_training=True,
           # 1536
           logits = slim.fully_connected(net, num_classes, activation_fn=None,
                                         scope='Logits')
-          end_points['Logits'] = logits
-          end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
-    return logits, end_points
+          w_variables = slim.get_model_variables()[-2]
+
+
+        end_points['Logits'] = logits
+        end_points['Predictions'] = tf.nn.softmax(logits, name='Predictions')
+    return logits, nett, w_variables
 inception_v4.default_image_size = 299
 
 
