@@ -125,3 +125,4 @@ def googlenet(inputs,
             end_points['predictions'] = tf.nn.softmax(end_points['logits'], name='predictions')
 
     return end_points['logits'], net, w_variables
+
