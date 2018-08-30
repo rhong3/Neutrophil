@@ -117,13 +117,13 @@ def vgg_a(inputs,
       net = slim.repeat(net, 2, slim.conv2d, 512, [3, 3], scope='conv5')
       net = slim.max_pool2d(net, [2, 2], scope='pool5')
 
+      nett = net
+
       # Use conv2d instead of fully_connected layers.
-      net = slim.conv2d(net, 4096, [7, 7], padding=fc_conv_padding, scope='fc6')
+      net = slim.conv2d(net, 4096, [10, 10], padding=fc_conv_padding, scope='fc6')
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                          scope='dropout6')
       net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
-
-      nett = net
 
       # Convert end_points_collection into a end_point dict.
       end_points = slim.utils.convert_collection_to_dict(end_points_collection)
@@ -203,6 +203,8 @@ def vgg_16(inputs,
       net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv5')
       net = slim.max_pool2d(net, [2, 2], scope='pool5')
 
+      nett = net
+
       # Use conv2d instead of fully_connected layers.
       """
       original architecture:
@@ -220,14 +222,15 @@ def vgg_16(inputs,
       if num_classes:
         net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                            scope='dropout7')
-        net = slim.conv2d(net, num_classes, [1, 1],
+        logits = slim.conv2d(net, num_classes, [1, 1],
                           activation_fn=None,
                           normalizer_fn=None,
                           scope='fc8')
+        w_variables = slim.get_model_variables()[-2]
         if spatial_squeeze and num_classes is not None:
           net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
         end_points[sc.name + '/fc8'] = net
-      return net, end_points
+      return logits, nett, w_variables
 vgg_16.default_image_size = 224
 
 
@@ -286,8 +289,10 @@ def vgg_19(inputs,
       net = slim.repeat(net, 4, slim.conv2d, 512, [3, 3], scope='conv5')
       net = slim.max_pool2d(net, [2, 2], scope='pool5')
 
+      nett = net
+
       # Use conv2d instead of fully_connected layers.
-      net = slim.conv2d(net, 4096, [7, 7], padding=fc_conv_padding, scope='fc6')
+      net = slim.conv2d(net, 4096, [10, 10], padding=fc_conv_padding, scope='fc6')
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                          scope='dropout6')
       net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
@@ -299,14 +304,15 @@ def vgg_19(inputs,
       if num_classes:
         net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                            scope='dropout7')
-        net = slim.conv2d(net, num_classes, [1, 1],
+        logits = slim.conv2d(net, num_classes, [1, 1],
                           activation_fn=None,
                           normalizer_fn=None,
                           scope='fc8')
+        w_variables = slim.get_model_variables()[-2]
         if spatial_squeeze:
           net = tf.squeeze(net, [1, 2], name='fc8/squeezed')
         end_points[sc.name + '/fc8'] = net
-      return net, end_points
+      return logits, nett, w_variables
 vgg_19.default_image_size = 224
 
 # Alias
