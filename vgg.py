@@ -120,7 +120,7 @@ def vgg_a(inputs,
       nett = net
 
       # Use conv2d instead of fully_connected layers.
-      net = slim.conv2d(net, 4096, [10, 10], padding=fc_conv_padding, scope='fc6')
+      net = slim.conv2d(net, 4096, [9, 9], padding=fc_conv_padding, scope='fc6')
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                          scope='dropout6')
       net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
@@ -292,7 +292,7 @@ def vgg_19(inputs,
       nett = net
 
       # Use conv2d instead of fully_connected layers.
-      net = slim.conv2d(net, 4096, [10, 10], padding=fc_conv_padding, scope='fc6')
+      net = slim.conv2d(net, 4096, [9, 9], padding=fc_conv_padding, scope='fc6')
       net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
                          scope='dropout6')
       net = slim.conv2d(net, 4096, [1, 1], scope='fc7')
