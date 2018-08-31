@@ -15,6 +15,7 @@ import HE_data_input
 import cnnm
 import cnng
 import cnni
+import cnnt
 import cnnir1
 import cnnir2
 import cnnva
@@ -335,9 +336,11 @@ def main(to_reload=None, test=None, log_dir=None):
 
 
     if to_reload:
-        if md == 'G':
+        if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
-        elif md == 'I':
+        elif md == 'I2':
+            m = cnnt.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'I3':
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I4':
             m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
@@ -369,9 +372,11 @@ def main(to_reload=None, test=None, log_dir=None):
         metrics(te, y, dirr, 'Test_{}'.format(num))
 
     elif test:  # restore
-        if md == 'G':
+        if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'I':
+        elif md == 'I2':
+            m = cnnt.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
+        elif md == 'I3':
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
         elif md == 'I4':
             m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
@@ -397,9 +402,11 @@ def main(to_reload=None, test=None, log_dir=None):
 
     else:  # train
         """to try cont'd training, load data from previously saved meta graph"""
-        if md == 'G':
+        if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
-        elif md == 'I':
+        elif md == 'I2':
+            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        elif md == 'I3':
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I4':
             m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
