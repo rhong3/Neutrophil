@@ -28,6 +28,7 @@ from PIL import Image
 import cv2
 
 
+Train = True
 num = sys.argv[1]
 dirr = sys.argv[2]
 bs = sys.argv[3]
@@ -448,8 +449,11 @@ if __name__ == "__main__":
             pass
 
     try:
-        to_reload = sys.argv[6]
-        main(to_reload=to_reload, log_dir=LOG_DIR)
+        modeltoload = sys.argv[6]
+        if Train:
+            main(to_reload=modeltoload, log_dir=LOG_DIR)
+        else:
+            main(to_reload=modeltoload, log_dir=LOG_DIR, test=True)
     except(IndexError):
         if not os.path.isfile(data_dir + '/lab_test.txt'):
             loader(img_dir)
