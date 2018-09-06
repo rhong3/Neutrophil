@@ -28,7 +28,7 @@ from PIL import Image
 import cv2
 
 
-Train = True
+Train = False
 num = sys.argv[1]
 dirr = sys.argv[2]
 bs = sys.argv[3]
@@ -51,7 +51,7 @@ HYPERPARAMS = {
 MAX_ITER = iter
 MAX_EPOCHS = np.inf
 
-img_dir = '../Neutrophil/All_Tiles_final/tot_sample.csv'
+img_dir = '../Neutrophil/yltiles/neg_sample.csv'
 LOG_DIR = "../Neutrophil/{}".format(dirr)
 METAGRAPH_DIR = "../Neutrophil/{}".format(dirr)
 data_dir = "../Neutrophil/{}/data".format(dirr)
