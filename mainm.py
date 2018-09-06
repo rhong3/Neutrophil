@@ -26,6 +26,7 @@ import sklearn as skl
 import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
+import Sample_prep
 
 
 num = sys.argv[1]
@@ -50,36 +51,55 @@ HYPERPARAMS = {
 MAX_ITER = iter
 MAX_EPOCHS = np.inf
 
-img_dir = '../Neutrophil/All_Tiles_final/tot_sample.csv'
+img_dir = '../Neutrophil/All_Tiles_final'
 LOG_DIR = "../Neutrophil/{}".format(dirr)
 METAGRAPH_DIR = "../Neutrophil/{}".format(dirr)
 data_dir = "../Neutrophil/{}/data".format(dirr)
 out_dir = "../Neutrophil/{}/out".format(dirr)
 
 
+def counters(totlist_dir):
+    trlist = pd.read_csv(totlist_dir + '/tr_sample.csv', header=0)
+    telist = pd.read_csv(totlist_dir + '/te_sample.csv', header=0)
+    trc = len(trlist['label']) - 1
+    tec = len(telist['label']) - 1
+    trnum = int(trc/5000)+1
+    tenum = int(tec/5000)+1
+
+    return trc, tec, trnum, tenum
+
 def loader(totlist_dir):
     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
     tile_lab = []
-    totlist = pd.read_csv(totlist_dir, header=0)
+    trlist = pd.read_csv(totlist_dir+'/tr_sample.csv', header=0)
+    telist = pd.read_csv(totlist_dir+'/te_sample.csv', header=0)
     f = 1
-    for index, row in totlist.iterrows():
+    for index, row in trlist.iterrows():
         image = Image.open(row['path'])
         pix = np.array(image)[:, :, 0:3]
         dat = np.vstack([dat, pix.flatten()])
         tile_lab.append(row['label'])
-        if len(tile_lab) == 5000 and index != len(totlist['label']) - 1:
+        if len(tile_lab) == 5000 or index == len(trlist['label']) - 1:
             np.savetxt(data_dir + '/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
             np.savetxt(data_dir + '/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
             dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
             tile_lab = []
             f += 1
-        elif index == len(totlist['label']) - 1:
-            np.savetxt(data_dir + '/data_test.txt', dat, fmt='%i', delimiter='\t')
-            np.savetxt(data_dir + '/lab_test.txt', tile_lab, fmt='%i', delimiter='\t')
+
+    dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
+    tile_lab = []
+    g = 1
+    for index, row in telist.iterrows():
+        image = Image.open(row['path'])
+        pix = np.array(image)[:, :, 0:3]
+        dat = np.vstack([dat, pix.flatten()])
+        tile_lab.append(row['label'])
+        if len(tile_lab) == 5000 or index == len(telist['label']) - 1:
+            np.savetxt(data_dir + '/data_test_{}.txt'.format(g), dat, fmt='%i', delimiter='\t')
+            np.savetxt(data_dir + '/lab_test_{}.txt'.format(g), tile_lab, fmt='%i', delimiter='\t')
             dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
             tile_lab = []
-            f += 1
-
+            g += 1
 
 # to_load =
 
@@ -393,7 +413,7 @@ def main(to_reload=None, test=None, log_dir=None):
         m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
 
-        x, y = HE.train.next_batch(1024)
+        x, y = HE.validation.next_batch(1024)
         print('Generating metrics')
         tr, trnet, trw = m.inference(x)
         CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(num))
@@ -442,7 +462,7 @@ def main(to_reload=None, test=None, log_dir=None):
                 verbose=True, save=True, outdir=METAGRAPH_DIR)
         print("Trained!", flush=True)
 
-        x, y = HE.train.next_batch(1024)
+        x, y = HE.validation.next_batch(1024)
         print('Generating training metrics')
         tr, trnet, trw = m.inference(x)
         CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(num))
@@ -464,6 +484,10 @@ if __name__ == "__main__":
         except(FileExistsError):
             pass
 
+    if not os.path.isfile(img_dir+'/te_sample.csv'):
+        _, _, _, tes, trs = Sample_prep.samplesum()
+        tes.to_csv(img_dir+'/te_sample.csv', index=False)
+        trs.to_csv(img_dir+'/tr_sample.csv', index=False)
     try:
         modeltoload = sys.argv[6]
         try:
