@@ -28,7 +28,6 @@ from PIL import Image
 import cv2
 
 
-Train = False
 num = sys.argv[1]
 dirr = sys.argv[2]
 bs = sys.argv[3]
@@ -51,7 +50,7 @@ HYPERPARAMS = {
 MAX_ITER = iter
 MAX_EPOCHS = np.inf
 
-img_dir = '../Neutrophil/yltiles/neg_sample.csv'
+img_dir = '../Neutrophil/All_Tiles_final/tot_sample.csv'
 LOG_DIR = "../Neutrophil/{}".format(dirr)
 METAGRAPH_DIR = "../Neutrophil/{}".format(dirr)
 data_dir = "../Neutrophil/{}/data".format(dirr)
@@ -324,19 +323,53 @@ def main(to_reload=None, test=None, log_dir=None):
     tlab_f = data_dir + '/lab_test.txt'
 
 
-    HE = load_HE_data(train_dat_name=dat_f,
-                      train_lab_name=lab_f,
-                      valid_dat_name=dat_f,
-                      valid_lab_name=lab_f)
+    if test:  # restore
+
+        HET = load_HE_data(train_dat_name=tdat_f,
+                           train_lab_name=tlab_f,
+                           valid_dat_name=tdat_f,
+                           valid_lab_name=tlab_f)
+
+        if md == 'IG':
+            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'I2':
+            m = cnnt.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'I3':
+            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'I4':
+            m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'IR1':
+            m = cnnir1.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'IR2':
+            m = cnnir2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'VA':
+            m = cnnva.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'V16':
+            m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        elif md == 'V19':
+            m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+
+        print("Loaded! Ready for test!", flush=True)
+
+        x, y = HET.validation.next_batch(1024)
+        print('Test:')
+        te, tenet, tew = m.inference(x)
+        CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
+        metrics(te, y, dirr, 'Test')
 
 
-    HET = load_HE_data(train_dat_name=dat_f,
-                      train_lab_name=lab_f,
-                      valid_dat_name=tdat_f,
-                      valid_lab_name=tlab_f)
+    elif to_reload:
 
+        HE = load_HE_data(train_dat_name=dat_f,
+                          train_lab_name=lab_f,
+                          valid_dat_name=dat_f,
+                          valid_lab_name=lab_f)
 
-    if to_reload:
+        HET = load_HE_data(train_dat_name=tdat_f,
+                           train_lab_name=tlab_f,
+                           valid_dat_name=tdat_f,
+                           valid_lab_name=tlab_f)
+
         if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I2':
@@ -372,36 +405,19 @@ def main(to_reload=None, test=None, log_dir=None):
         CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
         metrics(te, y, dirr, 'Test_{}'.format(num))
 
-    elif test:  # restore
-        if md == 'IG':
-            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'I2':
-            m = cnnt.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'I3':
-            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'I4':
-            m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'IR1':
-            m = cnnir1.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'IR2':
-            m = cnnir2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'VA':
-            m = cnnva.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'V16':
-            m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-        elif md == 'V19':
-            m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload)
-
-        print("Loaded! Ready for test!", flush=True)
-
-        x, y = HET.validation.next_batch(1024)
-        print('Test:')
-        te, tenet, tew = m.inference(x)
-        CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
-        metrics(te, y, dirr, 'Test')
-
 
     else:  # train
+
+        HE = load_HE_data(train_dat_name=dat_f,
+                          train_lab_name=lab_f,
+                          valid_dat_name=dat_f,
+                          valid_lab_name=lab_f)
+
+        HET = load_HE_data(train_dat_name=tdat_f,
+                           train_lab_name=tlab_f,
+                           valid_dat_name=tdat_f,
+                           valid_lab_name=tlab_f)
+
         """to try cont'd training, load data from previously saved meta graph"""
         if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
@@ -450,10 +466,11 @@ if __name__ == "__main__":
 
     try:
         modeltoload = sys.argv[6]
-        if Train:
-            main(to_reload=modeltoload, log_dir=LOG_DIR)
-        else:
+        try:
+            testmode = sys.argv[7]
             main(to_reload=modeltoload, log_dir=LOG_DIR, test=True)
+        except(IndexError):
+            main(to_reload=modeltoload, log_dir=LOG_DIR)
     except(IndexError):
         if not os.path.isfile(data_dir + '/lab_test.txt'):
             loader(img_dir)
