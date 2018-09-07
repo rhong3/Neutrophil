@@ -634,7 +634,7 @@ if __name__ == "__main__":
         except(IndexError):
             main(tenum, trnum, tec, reITER=iter, to_reload=modeltoload, log_dir=LOG_DIR)
     except(IndexError):
-        if not os.path.isfile(data_dir + '/lab_test.txt'):
+        if not os.path.isfile(data_dir + '/lab_test_{}.txt'.format(str(tenum))):
             loader(img_dir)
         main(tenum, trnum, tec, reITER=iter, old_ITER=0)
 
