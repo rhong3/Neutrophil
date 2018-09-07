@@ -29,11 +29,10 @@ import cv2
 import Sample_prep
 
 
-num = sys.argv[1]
-dirr = sys.argv[2]
-bs = sys.argv[3]
-iter = sys.argv[4]
-md = sys.argv[5]
+dirr = sys.argv[1]
+bs = sys.argv[2]
+iter = sys.argv[3]
+md = sys.argv[4]
 bs = int(bs)
 iter = int(iter)
 
@@ -66,7 +65,7 @@ def counters(totlist_dir):
     trnum = int(trc/5000)+1
     tenum = int(tec/5000)+1
 
-    return trc, tec, trnum, tenum
+    return tec, trnum, tenum
 
 def loader(totlist_dir):
     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
@@ -333,22 +332,9 @@ def CAM(net, w, pred, x, y, path, name):
                 cv2.imwrite(imname3, full)
 
 
-def main(to_reload=None, test=None, log_dir=None):
-    dat_f = data_dir + '/data_{}.txt'.format(num)
-
-    lab_f = data_dir + '/lab_{}.txt'.format(num)
-
-    tdat_f = data_dir + '/data_test.txt'
-
-    tlab_f = data_dir + '/lab_test.txt'
-
+def main(tenum, trnum, tec, reITER=None, old_ITER=None, to_reload=None, test=None, log_dir=None):
 
     if test:  # restore
-
-        HET = load_HE_data(train_dat_name=tdat_f,
-                           train_lab_name=tlab_f,
-                           valid_dat_name=tdat_f,
-                           valid_lab_name=tlab_f)
 
         if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
@@ -368,28 +354,60 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'V19':
             m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        else:
+            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
 
         print("Loaded! Ready for test!", flush=True)
 
-        x, y = HET.validation.next_batch(1024)
-        print('Test:')
-        te, tenet, tew = m.inference(x)
-        CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
-        metrics(te, y, dirr, 'Test')
+        for a in range(tenum):
+
+            aa = str(a+1)
+
+            tdat_f = data_dir + '/data_test_{}.txt'.format(aa)
+
+            tlab_f = data_dir + '/lab_test_{}.txt'.format(aa)
+
+            HET = load_HE_data(train_dat_name=tdat_f,
+                               train_lab_name=tlab_f,
+                               valid_dat_name=tdat_f,
+                               valid_lab_name=tlab_f)
+
+            ppp = int(5000 / 1024)
+
+            if tec > 5000:
+
+                for b in range(ppp):
+
+                    bb = str(b+1)
+
+                    x, y = HET.validation.next_batch(1024)
+                    print('Test:')
+                    te, tenet, tew = m.inference(x)
+                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+                    metrics(te, y, dirr, 'Test_{}'.format(bb))
+
+                tec = tec-5000
+
+
+            elif tec in range(1024, 5001):
+                mppp = int(tec/1024)
+
+                for b in range(mppp):
+
+                    bb = str(b+1+a*5)
+
+                    x, y = HET.validation.next_batch(1024)
+                    print('Test:')
+                    te, tenet, tew = m.inference(x)
+                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+                    metrics(te, y, dirr, 'Test_{}'.format(bb))
+
+            else:
+                print("Not enough for a test batch!")
 
 
     elif to_reload:
 
-        HE = load_HE_data(train_dat_name=dat_f,
-                          train_lab_name=lab_f,
-                          valid_dat_name=dat_f,
-                          valid_lab_name=lab_f)
-
-        HET = load_HE_data(train_dat_name=tdat_f,
-                           train_lab_name=tlab_f,
-                           valid_dat_name=tdat_f,
-                           valid_lab_name=tlab_f)
-
         if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I2':
@@ -408,37 +426,95 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'V19':
             m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+        else:
+            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
 
-        print("Loaded!", flush=True)
-        m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
-                verbose=True, save=True, outdir=METAGRAPH_DIR)
+        print("Loaded! Restart training.", flush=True)
 
-        x, y = HE.validation.next_batch(1024)
-        print('Generating metrics')
-        tr, trnet, trw = m.inference(x)
-        CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(num))
-        metrics(tr, y, dirr, 'Train_{}'.format(num))
+        for a in range(trnum):
 
-        x, y = HET.validation.next_batch(1024)
-        print('Test:')
-        te, tenet, tew = m.inference(x)
-        CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
-        metrics(te, y, dirr, 'Test_{}'.format(num))
+            old_ITER = m.global_step
+
+            print(m.global_step)
+
+            MAX_ITER = old_ITER+reITER*(a+1)
+
+            aa = str(a + 1)
+
+            dat_f = data_dir + '/data_{}.txt'.format(aa)
+
+            lab_f = data_dir + '/lab_{}.txt'.format(aa)
+
+
+            HE = load_HE_data(train_dat_name=dat_f,
+                              train_lab_name=lab_f,
+                              valid_dat_name=dat_f,
+                              valid_lab_name=lab_f)
+
+            if a == trnum-1:
+                m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
+                        verbose=True, save=True, outdir=METAGRAPH_DIR)
+            else:
+                m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
+                        verbose=True, save=False, outdir=METAGRAPH_DIR)
+
+            x, y = HE.validation.next_batch(1024)
+            print('Generating metrics')
+            tr, trnet, trw = m.inference(x)
+            CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
+            metrics(tr, y, dirr, 'Train_{}'.format(aa))
+
+
+
+        for at in range(tenum):
+
+            aat = str(at+1)
+
+            tdat_f = data_dir + '/data_test_{}.txt'.format(aat)
+
+            tlab_f = data_dir + '/lab_test_{}.txt'.format(aat)
+
+            HET = load_HE_data(train_dat_name=tdat_f,
+                               train_lab_name=tlab_f,
+                               valid_dat_name=tdat_f,
+                               valid_lab_name=tlab_f)
+
+            ppp = int(5000 / 1024)
+
+            if tec > 5000:
+
+                for b in range(ppp):
+
+                    bb = str(b+1)
+
+                    x, y = HET.validation.next_batch(1024)
+                    print('Test:')
+                    te, tenet, tew = m.inference(x)
+                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+                    metrics(te, y, dirr, 'Test_{}'.format(bb))
+
+                tec = tec-5000
+
+
+            elif tec in range(1024, 5001):
+                mppp = int(tec/1024)
+
+                for b in range(mppp):
+
+                    bb = str(b+1+at*5)
+
+                    x, y = HET.validation.next_batch(1024)
+                    print('Test:')
+                    te, tenet, tew = m.inference(x)
+                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+                    metrics(te, y, dirr, 'Test_{}'.format(bb))
+
+            else:
+                print("Not enough for a test batch!")
 
 
     else:  # train
 
-        HE = load_HE_data(train_dat_name=dat_f,
-                          train_lab_name=lab_f,
-                          valid_dat_name=dat_f,
-                          valid_lab_name=lab_f)
-
-        HET = load_HE_data(train_dat_name=tdat_f,
-                           train_lab_name=tlab_f,
-                           valid_dat_name=tdat_f,
-                           valid_lab_name=tlab_f)
-
-        """to try cont'd training, load data from previously saved meta graph"""
         if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I2':
@@ -457,22 +533,82 @@ def main(to_reload=None, test=None, log_dir=None):
             m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'V19':
             m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+        else:
+            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
 
-        m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
-                verbose=True, save=True, outdir=METAGRAPH_DIR)
-        print("Trained!", flush=True)
+        print("Start training!")
 
-        x, y = HE.validation.next_batch(1024)
-        print('Generating training metrics')
-        tr, trnet, trw = m.inference(x)
-        CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(num))
-        metrics(tr, y, dirr, 'Train_{}'.format(num))
+        for a in range(trnum):
 
-        x, y = HET.validation.next_batch(1024)
-        print('Test:')
-        te, tenet, tew = m.inference(x)
-        CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(num))
-        metrics(te, y, dirr, 'Test_{}'.format(num))
+            MAX_ITER = old_ITER + reITER * (a + 1)
+
+            aa = str(a + 1)
+
+            dat_f = data_dir + '/data_{}.txt'.format(aa)
+
+            lab_f = data_dir + '/lab_{}.txt'.format(aa)
+
+            HE = load_HE_data(train_dat_name=dat_f,
+                              train_lab_name=lab_f,
+                              valid_dat_name=dat_f,
+                              valid_lab_name=lab_f)
+
+            if a == trnum-1:
+                m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
+                        verbose=True, save=True, outdir=METAGRAPH_DIR)
+            else:
+                m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
+                        verbose=True, save=False, outdir=METAGRAPH_DIR)
+
+            x, y = HE.validation.next_batch(1024)
+            print('Generating metrics')
+            tr, trnet, trw = m.inference(x)
+            CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
+            metrics(tr, y, dirr, 'Train_{}'.format(aa))
+
+        for at in range(tenum):
+
+            aat = str(at + 1)
+
+            tdat_f = data_dir + '/data_test_{}.txt'.format(aat)
+
+            tlab_f = data_dir + '/lab_test_{}.txt'.format(aat)
+
+            HET = load_HE_data(train_dat_name=tdat_f,
+                               train_lab_name=tlab_f,
+                               valid_dat_name=tdat_f,
+                               valid_lab_name=tlab_f)
+
+            ppp = int(5000 / 1024)
+
+            if tec > 5000:
+
+                for b in range(ppp):
+                    bb = str(b + 1)
+
+                    x, y = HET.validation.next_batch(1024)
+                    print('Test:')
+                    te, tenet, tew = m.inference(x)
+                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+                    metrics(te, y, dirr, 'Test_{}'.format(bb))
+
+                tec = tec - 5000
+
+
+            elif tec in range(1024, 5001):
+                mppp = int(tec / 1024)
+
+                for b in range(mppp):
+                    bb = str(b + 1 + at * 5)
+
+                    x, y = HET.validation.next_batch(1024)
+                    print('Test:')
+                    te, tenet, tew = m.inference(x)
+                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+                    metrics(te, y, dirr, 'Test_{}'.format(bb))
+
+            else:
+                print("Not enough for a test batch!")
 
 
 if __name__ == "__main__":
@@ -488,16 +624,18 @@ if __name__ == "__main__":
         _, _, _, tes, trs = Sample_prep.samplesum()
         tes.to_csv(img_dir+'/te_sample.csv', index=False)
         trs.to_csv(img_dir+'/tr_sample.csv', index=False)
+    tec, trnum, tenum = counters(img_dir)
+
     try:
-        modeltoload = sys.argv[6]
+        modeltoload = sys.argv[5]
         try:
-            testmode = sys.argv[7]
-            main(to_reload=modeltoload, log_dir=LOG_DIR, test=True)
+            testmode = sys.argv[6]
+            main(tenum, trnum, tec, to_reload=modeltoload, log_dir=LOG_DIR, test=True)
         except(IndexError):
-            main(to_reload=modeltoload, log_dir=LOG_DIR)
+            main(tenum, trnum, tec, reITER=iter, to_reload=modeltoload, log_dir=LOG_DIR)
     except(IndexError):
         if not os.path.isfile(data_dir + '/lab_test.txt'):
             loader(img_dir)
-        main()
+        main(tenum, trnum, tec, reITER=iter, old_ITER=0)
 
 
