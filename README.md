@@ -1,1 +1,7 @@
 # Neutrophil
+
+Using Deep Learning Methods to Identify Neutrophil Infiltration in Histology Images: Helping Pathologists Diagnose Infection After Hip and Knee Transplant Surgery
+
+Surgeons regularly evaluate the status of hip and knee implants to determine whether the surrounding area has been infected. A critical sign of infection is Neutrophil Infiltration. Using labeled and verified medical histology images from pathologists, we trained deep neural network models to identify regions of neutrophil infiltration automatically and with high accuracy. Each histology image was tiled into 299 by 299 pixel region, and 90% of these tiles were used as training set while the rest 10% were used for testing. The data were augmented with rotation and random cropping and the ratio of positive and negative tiles was balanced through augmentation. Models were trained on a GPU-equipped HPC. A model using Inception V3 structure resulted in a 94% accuracy rate on the test set with ROC-AUC score of 0.98 and precision-recall score of 0.97 after a 154-epoch training. Resnet-50 structured model gave similar results. An ideal estimated predicting speed of the model for a normal histology image on a single GPU would be less than 15 minutes. Further studies and refinements are required to make a robust, fast, and user-friendly model for medical professionals. 
+
+# Unpublished work. No copy or duplication without permission. Thanks! 
