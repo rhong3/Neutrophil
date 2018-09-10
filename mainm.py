@@ -60,12 +60,12 @@ out_dir = "../Neutrophil/{}/out".format(dirr)
 def counters(totlist_dir):
     trlist = pd.read_csv(totlist_dir + '/tr_sample.csv', header=0)
     telist = pd.read_csv(totlist_dir + '/te_sample.csv', header=0)
-    trc = len(trlist['label']) - 1
-    tec = len(telist['label']) - 1
-    trnum = int(trc/5000)+1
-    tenum = int(tec/5000)+1
+    trcc = len(trlist['label']) - 1
+    tecc = len(telist['label']) - 1
+    trnumm = int(trc/5000)+1
+    tenumm = int(tec/5000)+1
 
-    return tec, trnum, tenum
+    return trcc, tecc, trnumm, tenumm
 
 def loader(totlist_dir):
     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
@@ -332,7 +332,7 @@ def CAM(net, w, pred, x, y, path, name):
                 cv2.imwrite(imname3, full)
 
 
-def main(tenum, trnum, tec, reITER=None, old_ITER=None, to_reload=None, test=None, log_dir=None):
+def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, test=None, log_dir=None):
 
     if test:  # restore
 
@@ -458,11 +458,22 @@ def main(tenum, trnum, tec, reITER=None, old_ITER=None, to_reload=None, test=Non
                 m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                         verbose=True, save=False, outdir=METAGRAPH_DIR)
 
-            x, y = HE.validation.next_batch(1024)
-            print('Generating metrics')
-            tr, trnet, trw = m.inference(x)
-            CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
-            metrics(tr, y, dirr, 'Train_{}'.format(aa))
+            if trc > 1026:
+                x, y = HE.validation.next_batch(1024)
+                print('Generating metrics')
+                tr, trnet, trw = m.inference(x)
+                CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
+                metrics(tr, y, dirr, 'Train_{}'.format(aa))
+            elif trc in range(50, 1026):
+                x, y = HE.validation.next_batch(trc)
+                print('Generating metrics')
+                tr, trnet, trw = m.inference(x)
+                CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
+                metrics(tr, y, dirr, 'Train_{}'.format(aa))
+            else:
+                print("The last training set is too small! No metrics generated.")
+
+            trc -= 5000
 
 
 
@@ -560,11 +571,22 @@ def main(tenum, trnum, tec, reITER=None, old_ITER=None, to_reload=None, test=Non
                 m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
                         verbose=True, save=False, outdir=METAGRAPH_DIR)
 
-            x, y = HE.validation.next_batch(1024)
-            print('Generating metrics')
-            tr, trnet, trw = m.inference(x)
-            CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
-            metrics(tr, y, dirr, 'Train_{}'.format(aa))
+            if trc > 1026:
+                x, y = HE.validation.next_batch(1024)
+                print('Generating metrics')
+                tr, trnet, trw = m.inference(x)
+                CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
+                metrics(tr, y, dirr, 'Train_{}'.format(aa))
+            elif trc in range(50, 1026):
+                x, y = HE.validation.next_batch(trc)
+                print('Generating metrics')
+                tr, trnet, trw = m.inference(x)
+                CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
+                metrics(tr, y, dirr, 'Train_{}'.format(aa))
+            else:
+                print("The last training set is too small! No metrics generated.")
+
+            trc -= 5000
 
         for at in range(tenum):
 
@@ -624,18 +646,18 @@ if __name__ == "__main__":
         _, _, _, tes, trs = Sample_prep.samplesum()
         tes.to_csv(img_dir+'/te_sample.csv', index=False)
         trs.to_csv(img_dir+'/tr_sample.csv', index=False)
-    tec, trnum, tenum = counters(img_dir)
+    trc, tec, trnum, tenum = counters(img_dir)
 
     try:
         modeltoload = sys.argv[5]
         try:
             testmode = sys.argv[6]
-            main(tenum, trnum, tec, to_reload=modeltoload, log_dir=LOG_DIR, test=True)
+            main(tenum, trnum, trc, tec, to_reload=modeltoload, log_dir=LOG_DIR, test=True)
         except(IndexError):
-            main(tenum, trnum, tec, reITER=iter, to_reload=modeltoload, log_dir=LOG_DIR)
+            main(tenum, trnum, trc, tec, reITER=iter, to_reload=modeltoload, log_dir=LOG_DIR)
     except(IndexError):
         if not os.path.isfile(data_dir + '/lab_test_{}.txt'.format(str(tenum))):
             loader(img_dir)
-        main(tenum, trnum, tec, reITER=iter, old_ITER=0)
+        main(tenum, trnum, trc, tec, reITER=iter, old_ITER=0)
 
 
