@@ -433,12 +433,6 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
         for a in range(trnum):
 
-            old_ITER = m.global_step
-
-            print(m.global_step)
-
-            MAX_ITER = old_ITER+reITER*(a+1)
-
             aa = str(a + 1)
 
             dat_f = data_dir + '/data_{}.txt'.format(aa)
@@ -450,6 +444,10 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
                               train_lab_name=lab_f,
                               valid_dat_name=dat_f,
                               valid_lab_name=lab_f)
+
+            old_ITER = m.get_global_step(HE)[0]
+
+            MAX_ITER = old_ITER+reITER*(a+1)
 
             if a == trnum-1:
                 m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
