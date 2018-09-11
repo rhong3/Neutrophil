@@ -138,6 +138,23 @@ class INCEPTION():
     def inference(self, x, train_status=False):
         feed_dict={self.x_in:x, self.is_train: train_status}
         return self.sesh.run(self.pred, feed_dict=feed_dict)
+
+    def get_global_step(self, X):
+        x, y = X.train.next_batch(self.batch_size)
+
+        feed_dict = {self.x_in: x, self.y_in: y,
+                     self.dropout_: self.dropout}
+
+        fetches = [self.global_step]
+
+        # Benchmark the learning
+        # run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        # run_metadata = tf.RunMetadata()
+
+        i = self.sesh.run(fetches, feed_dict)
+
+        return i
+
     
     def train(self, X, max_iter=np.inf, max_epochs=np.inf,cross_validate=True,
               verbose=True, save=True, outdir="./out"):
