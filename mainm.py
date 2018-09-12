@@ -123,6 +123,7 @@ def load_HE_data(train_dat_name, train_lab_name, valid_dat_name, valid_lab_name)
     valid_dat = iter_loadtxt(valid_dat_name, dtype=int, delimiter='\t')
     train_lab = iter_loadtxt(train_lab_name, dtype=int, delimiter='\t')
     valid_lab = iter_loadtxt(valid_lab_name, dtype=int, delimiter='\t')
+    size = train_lab.shape[1]
 
     class DataSets(object):
         pass
@@ -136,7 +137,7 @@ def load_HE_data(train_dat_name, train_lab_name, valid_dat_name, valid_lab_name)
     data_sets.validation = HE_data_input.DataSet(images=valid_dat,
                                                  labels=valid_lab,
                                                  reshape=False)
-    return data_sets
+    return data_sets, size
 
 
 def metrics(pdx, tl, path, name):
@@ -367,7 +368,7 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
             tlab_f = data_dir + '/lab_test_{}.txt'.format(aa)
 
-            HET = load_HE_data(train_dat_name=tdat_f,
+            HET, _ = load_HE_data(train_dat_name=tdat_f,
                                train_lab_name=tlab_f,
                                valid_dat_name=tdat_f,
                                valid_lab_name=tlab_f)
@@ -440,14 +441,21 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
             lab_f = data_dir + '/lab_{}.txt'.format(aa)
 
 
-            HE = load_HE_data(train_dat_name=dat_f,
+            HE, sz = load_HE_data(train_dat_name=dat_f,
                               train_lab_name=lab_f,
                               valid_dat_name=dat_f,
                               valid_lab_name=lab_f)
 
+            print(sz)
+
             old_ITER = m.get_global_step(HE)[0]
 
-            MAX_ITER = old_ITER+reITER*(a+1)
+            if sz < 4998:
+                reITER = sz * reITER/5000
+                MAX_ITER = old_ITER + reITER
+
+            else:
+                MAX_ITER = old_ITER + reITER
 
             if a == trnum-1:
                 m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
@@ -483,7 +491,7 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
             tlab_f = data_dir + '/lab_test_{}.txt'.format(aat)
 
-            HET = load_HE_data(train_dat_name=tdat_f,
+            HET, _ = load_HE_data(train_dat_name=tdat_f,
                                train_lab_name=tlab_f,
                                valid_dat_name=tdat_f,
                                valid_lab_name=tlab_f)
@@ -549,18 +557,23 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
         for a in range(trnum):
 
-            MAX_ITER = old_ITER + reITER * (a + 1)
-
             aa = str(a + 1)
 
             dat_f = data_dir + '/data_{}.txt'.format(aa)
 
             lab_f = data_dir + '/lab_{}.txt'.format(aa)
 
-            HE = load_HE_data(train_dat_name=dat_f,
+            HE, sz = load_HE_data(train_dat_name=dat_f,
                               train_lab_name=lab_f,
                               valid_dat_name=dat_f,
                               valid_lab_name=lab_f)
+
+            if sz < 4998:
+                modITER = sz * reITER / 5000
+                MAX_ITER = old_ITER + reITER * a + modITER
+
+            else:
+                MAX_ITER = old_ITER + reITER * (a + 1)
 
             if a == trnum-1:
                 m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
@@ -594,7 +607,7 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
             tlab_f = data_dir + '/lab_test_{}.txt'.format(aat)
 
-            HET = load_HE_data(train_dat_name=tdat_f,
+            HET, _ = load_HE_data(train_dat_name=tdat_f,
                                train_lab_name=tlab_f,
                                valid_dat_name=tdat_f,
                                valid_lab_name=tlab_f)
