@@ -446,8 +446,6 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
                               valid_dat_name=dat_f,
                               valid_lab_name=lab_f)
 
-            print(sz)
-
             old_ITER = m.get_global_step(HE)[0]
 
             if sz < 4998:
@@ -567,8 +565,6 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
                               train_lab_name=lab_f,
                               valid_dat_name=dat_f,
                               valid_lab_name=lab_f)
-
-            print(sz)
 
             if sz < 4998:
                 modITER = int(sz * reITER / 5000)
