@@ -123,7 +123,7 @@ def load_HE_data(train_dat_name, train_lab_name, valid_dat_name, valid_lab_name)
     valid_dat = iter_loadtxt(valid_dat_name, dtype=int, delimiter='\t')
     train_lab = iter_loadtxt(train_lab_name, dtype=int, delimiter='\t')
     valid_lab = iter_loadtxt(valid_lab_name, dtype=int, delimiter='\t')
-    size = train_lab.shape[1]
+    size = train_lab.shape[0]
 
     class DataSets(object):
         pass
@@ -451,7 +451,7 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
             old_ITER = m.get_global_step(HE)[0]
 
             if sz < 4998:
-                reITER = sz * reITER/5000
+                reITER = int(sz * reITER/5000)
                 MAX_ITER = old_ITER + reITER
 
             else:
@@ -568,8 +568,10 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
                               valid_dat_name=dat_f,
                               valid_lab_name=lab_f)
 
+            print(sz)
+
             if sz < 4998:
-                modITER = sz * reITER / 5000
+                modITER = int(sz * reITER / 5000)
                 MAX_ITER = old_ITER + reITER * a + modITER
 
             else:
