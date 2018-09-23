@@ -63,7 +63,7 @@ def counters(totlist_dir):
     trcc = len(trlist['label']) - 1
     tecc = len(telist['label']) - 1
     trnumm = int(trcc/5000)+1
-    tenumm = int(tecc/5000)+1
+    tenumm = int(tecc/5000) #+1
 
     return trcc, tecc, trnumm, tenumm
 
