@@ -62,8 +62,8 @@ def counters(totlist_dir):
     telist = pd.read_csv(totlist_dir + '/te_sample.csv', header=0)
     trcc = len(trlist['label']) - 1
     tecc = len(telist['label']) - 1
-    trnumm = int(trcc/5000)+1
-    tenumm = int(tecc/5000) #+1
+    trnumm = int(trcc/5000)#+1
+    tenumm = int(tecc/5000)+1
 
     return trcc, tecc, trnumm, tenumm
 
