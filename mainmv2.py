@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun 14 16:15:18 2017
+Created on 09/28/2018
 
-@authors: lwk, RH
+@author: RH
 """
 import matplotlib
 matplotlib.use('Agg')
