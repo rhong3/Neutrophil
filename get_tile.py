@@ -32,6 +32,9 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
     if not os.path.exists(path_to_slide + 'Tiles'):
             os.makedirs(path_to_slide + 'Tiles')
 
+    if not os.path.exists(path_to_slide + 'Outputs'):
+            os.makedirs(path_to_slide + 'Outputs')
+
     for i in range(n_x - 1):
         for j in range(n_y - 1):
             target_x = stepsize * i
@@ -51,7 +54,7 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
                 the_image.save(path_to_slide+"Tiles/region_x-{}-y-{}.png".format(target_x, target_y))
                 imloc.append([svcounter, counter, target_x, target_y])
                 if svcounter % 5000 == 0:
-                    np.savetxt(path_to_slide+'data-{}.txt'.format(svcounter), dat, fmt='%i', delimiter='\t')
+                    np.savetxt(path_to_slide+'outputs/data-{}.txt'.format(svcounter), dat, fmt='%i', delimiter='\t')
                     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
                 pix = np.array(the_image)[:, :, 0:3]
                 dat = np.vstack([dat, pix.flatten()])
@@ -61,7 +64,7 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
 
             counter += 1
 
-    np.savetxt(path_to_slide+'slide80_mini_data-{}.txt'.format(svcounter), dat, fmt='%i', delimiter='\t')
+    np.savetxt(path_to_slide+'outputs/data-{}.txt'.format(svcounter), dat, fmt='%i', delimiter='\t')
     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
     imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y"])
-    imlocpd.to_csv(path_to_slide+"dict.csv", index = False)
+    imlocpd.to_csv(path_to_slide+"outputs/dict.csv", index = False)
