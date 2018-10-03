@@ -51,16 +51,17 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
             white = np.sum(mask)/(299*299)
 
             if white < 0.5:
-                the_image.save(path_to_slide+"Tiles/region_x-{}-y-{}.png".format(target_x, target_y))
+                # the_image.save(path_to_slide+"Tiles/region_x-{}-y-{}.png".format(target_x, target_y))
                 imloc.append([svcounter, counter, target_x, target_y])
-                if svcounter % 5000 == 0:
+                if svcounter % 5000 == 0 and svcounter != 0:
                     np.savetxt(path_to_slide+'outputs/data-{}.txt'.format(svcounter), dat, fmt='%i', delimiter='\t')
                     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
                 pix = np.array(the_image)[:, :, 0:3]
                 dat = np.vstack([dat, pix.flatten()])
                 svcounter += 1
             else:
-                print('Ignore white!')
+                pass
+                # print('Ignore white!')
 
             counter += 1
 
