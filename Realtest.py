@@ -23,9 +23,6 @@ import cnnva
 import cnnv16
 import cnnv19
 import pandas as pd
-import sklearn as skl
-import matplotlib.pyplot as plt
-from PIL import Image
 import cv2
 
 dirr = sys.argv[1]
@@ -314,20 +311,25 @@ def test(tenum, tec, to_reload=None):
 
 # cut tiles with coordinates in the name (exclude white)
 
+start_time = time.time()
+
 if not os.path.isfile(data_dir+'/dict.csv'):
-    get_tile.tile(image_file=sys.argv[6], outdir = METAGRAPH_DIR)
+    get_tile.tile(image_file=imgfile, outdir = METAGRAPH_DIR)
 
 dict = pd.read_csv(data_dir+'/dict.csv', header=0)
 tec = len(dict["num"])
 tenum = int(tec/5000)+1
+
+print("--- %s seconds ---" % (time.time() - start_time))
+
 listfinal = test(tenum, tec, to_reload=modeltoload)
 se = pd.Series(listfinal)
 dict['prediction'] = se
 dict.to_csv(out_dir+'/finaldict.csv', index = False)
 
-start_time = time.time()
 
-print("--- %s seconds ---" % (time.time() - start_time))
+
+
 
 # load 5000 each time until it is done
 

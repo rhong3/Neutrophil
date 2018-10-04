@@ -33,11 +33,11 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
     if not os.path.exists(outdir):
             os.makedirs(outdir)
 
-    if not os.path.exists(outdir + 'Tiles'):
-            os.makedirs(outdir + 'Tiles')
+    if not os.path.exists(outdir + '/Tiles'):
+            os.makedirs(outdir + '/Tiles')
 
-    if not os.path.exists(outdir + 'data'):
-            os.makedirs(outdir + 'data')
+    if not os.path.exists(outdir + '/data'):
+            os.makedirs(outdir + '/data')
 
     for i in range(n_x - 1):
         for j in range(n_y - 1):
