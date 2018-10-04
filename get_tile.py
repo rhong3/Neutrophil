@@ -59,7 +59,7 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
                 imloc.append([svcounter, counter, target_x, target_y])
                 if svcounter % 5000 == 0 and svcounter != 0:
                     ct = int(svcounter/5000)
-                    np.savetxt(outdir + 'data/data-{}.txt'.format(ct), dat, fmt='%i', delimiter='\t')
+                    np.savetxt(outdir + '/data/data-{}.txt'.format(ct), dat, fmt='%i', delimiter='\t')
                     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
                 pix = np.array(the_image)[:, :, 0:3]
                 dat = np.vstack([dat, pix.flatten()])
@@ -70,7 +70,7 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
 
             counter += 1
     ct += 1
-    np.savetxt(outdir + 'data/data-{}.txt'.format(ct), dat, fmt='%i', delimiter='\t')
+    np.savetxt(outdir + '/data/data-{}.txt'.format(ct), dat, fmt='%i', delimiter='\t')
     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
     imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y"])
-    imlocpd.to_csv(outdir + "data/dict.csv", index = False)
+    imlocpd.to_csv(outdir + "/data/dict.csv", index = False)
