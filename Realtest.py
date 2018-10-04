@@ -130,7 +130,7 @@ def py_map2jpg(imgmap, rang, colorMap):
     return cv2.applyColorMap(heatmap_x, cv2.COLORMAP_JET)
 
 
-def CAM(net, w, pred, x, path, name, prlista):
+def CAM(net, w, pred, x, path, name, prlista, universal):
     DIR = "../Neutrophil/{}/out/{}_posimg".format(path, name)
     DIRR = "../Neutrophil/{}/out/{}_negimg".format(path, name)
 
@@ -186,10 +186,10 @@ def CAM(net, w, pred, x, path, name, prlista):
                 curHeatMap = a * 0.6 + b * 0.4
                 ab = np.hstack((a,b))
                 full = np.hstack((curHeatMap, ab))
-                # imname = DIRR + '/' + ddt + str(ij) + '.png'
-                # imname1 = DIRR + '/' + ddt + str(ij) + '_img.png'
-                # imname2 = DIRR+ '/' + ddt + str(ij) + '_hm.png'
-                imname3 = DIRR + '/' + str(ij) + '_full.png'
+                # imname = DIRR + '/' + ddt + str(universal) + '.png'
+                # imname1 = DIRR + '/' + ddt + str(universal) + '_img.png'
+                # imname2 = DIRR+ '/' + ddt + str(universal) + '_hm.png'
+                imname3 = DIRR + '/' + str(universal) + '_full.png'
                 # cv2.imwrite(imname, curHeatMap)
                 # cv2.imwrite(imname1, a)
                 # cv2.imwrite(imname2, b)
@@ -228,14 +228,17 @@ def CAM(net, w, pred, x, path, name, prlista):
                 curHeatMap = a * 0.6 + b * 0.4
                 ab = np.hstack((a,b))
                 full = np.hstack((curHeatMap, ab))
-                # imname = DIR + '/' + ddt + str(ij) + '.png'
-                # imname1 = DIR + '/' + ddt + str(ij) + '_img.png'
-                # imname2 = DIR + '/' + ddt + str(ij) + '_hm.png'
-                imname3 = DIR + '/' + str(ij) + '_full.png'
+                # imname = DIR + '/' + ddt + str(universal) + '.png'
+                # imname1 = DIR + '/' + ddt + str(universal) + '_img.png'
+                # imname2 = DIR + '/' + ddt + str(universal) + '_hm.png'
+                imname3 = DIR + '/' + str(universal) + '_full.png'
                 # cv2.imwrite(imname, curHeatMap)
                 # cv2.imwrite(imname1, a)
                 # cv2.imwrite(imname2, b)
                 cv2.imwrite(imname3, full)
+
+        universal +=1
+
     return newprlist
 
 
@@ -265,6 +268,7 @@ def test(tenum, tec, to_reload=None):
     print("Loaded! Ready for test!", flush=True)
 
     prlist = []
+    universal = 0
 
     for a in range(tenum):
 
@@ -280,7 +284,8 @@ def test(tenum, tec, to_reload=None):
                 x = HET.validation.next_batch(1000)
                 print('Test:')
                 te, tenet, tew = m.inference(x)
-                prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist)
+                prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist, universal)
+                universal += 1000
 
         elif tec in range(1000, 5000):
             mppp = int(tec / 1000)+1
@@ -293,14 +298,18 @@ def test(tenum, tec, to_reload=None):
                     x = HET.validation.next_batch(1000)
                 print('Test:')
                 te, tenet, tew = m.inference(x)
-                prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist)
+                prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist, universal)
+                if b == mppp - 1:
+                    universal += (tec%1000)
+                else:
+                    universal += 1000
 
         else:
             x, y = HET.validation.next_batch(tec)
             print('Test:')
             te, tenet, tew = m.inference(x)
-            prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist)
-
+            prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist, universal)
+            universal += tec
     return prlist
 
 # cut tiles with coordinates in the name (exclude white)
