@@ -5,7 +5,6 @@ from __future__ import print_function
 import numpy as np
 
 from tensorflow.python.framework import dtypes
-from six.moves import xrange
     
 
 class DataSet(object):
@@ -15,11 +14,7 @@ class DataSet(object):
                labels,
                dtype=dtypes.float32,
                reshape=True):
-    """Construct a DataSet.
-    one_hot arg is used only if fake_data is true.  `dtype` can be either
-    `uint8` to leave the input as `[0, 255]`, or `float32` to rescale into
-    `[0, 1]`.
-    """
+
     dtype = dtypes.as_dtype(dtype).base_dtype
     if dtype not in (dtypes.uint8, dtypes.float32):
       raise TypeError('Invalid image dtype %r, expected uint8 or float32' %

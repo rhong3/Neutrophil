@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 
-def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026280_2016-10-27 14_13_01.scn"):
+def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026280_2016-10-27 14_13_01.scn", outdir = "../Neutrophil/Outputs/"):
     slide = OpenSlide(path_to_slide+image_file)
 
     assert 'openslide.bounds-height' in slide.properties
@@ -28,12 +28,16 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
     imloc = []
     counter = 0
     svcounter = 0
+    ct = 0
 
-    if not os.path.exists(path_to_slide + 'Tiles'):
-            os.makedirs(path_to_slide + 'Tiles')
+    if not os.path.exists(outdir):
+            os.makedirs(outdir)
 
-    if not os.path.exists(path_to_slide + 'Outputs'):
-            os.makedirs(path_to_slide + 'Outputs')
+    if not os.path.exists(outdir + 'Tiles'):
+            os.makedirs(outdir + 'Tiles')
+
+    if not os.path.exists(outdir + 'data'):
+            os.makedirs(outdir + 'data')
 
     for i in range(n_x - 1):
         for j in range(n_y - 1):
@@ -51,10 +55,11 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
             white = np.sum(mask)/(299*299)
 
             if white < 0.5:
-                # the_image.save(path_to_slide+"Tiles/region_x-{}-y-{}.png".format(target_x, target_y))
+                # the_image.save(outdir + "Tiles/region_x-{}-y-{}.png".format(target_x, target_y))
                 imloc.append([svcounter, counter, target_x, target_y])
                 if svcounter % 5000 == 0 and svcounter != 0:
-                    np.savetxt(path_to_slide+'outputs/data-{}.txt'.format(svcounter), dat, fmt='%i', delimiter='\t')
+                    ct = int(svcounter/5000)
+                    np.savetxt(outdir + 'data/data-{}.txt'.format(ct), dat, fmt='%i', delimiter='\t')
                     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
                 pix = np.array(the_image)[:, :, 0:3]
                 dat = np.vstack([dat, pix.flatten()])
@@ -64,8 +69,8 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
                 # print('Ignore white!')
 
             counter += 1
-
-    np.savetxt(path_to_slide+'outputs/data-{}.txt'.format(svcounter), dat, fmt='%i', delimiter='\t')
+    ct += 1
+    np.savetxt(outdir + 'data/data-{}.txt'.format(ct), dat, fmt='%i', delimiter='\t')
     dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
     imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y"])
-    imlocpd.to_csv(path_to_slide+"outputs/dict.csv", index = False)
+    imlocpd.to_csv(outdir + "data/dict.csv", index = False)

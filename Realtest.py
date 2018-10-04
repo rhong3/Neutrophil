@@ -12,7 +12,6 @@ matplotlib.use('Agg')
 import os
 import sys
 import numpy as np
-import tensorflow as tf
 import HE_data_input_te
 import cnnm
 import cnng
@@ -29,11 +28,11 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
 
-start_time = time.time()
-
 dirr = sys.argv[1]
-bs = sys.argv[2]
-md = sys.argv[3]
+imgfile = sys.argv[2]
+bs = sys.argv[3]
+md = sys.argv[4]
+modeltoload = sys.argv[5]
 bs = int(bs)
 
 IMG_DIM = 299
@@ -50,6 +49,26 @@ METAGRAPH_DIR = "../Neutrophil/{}".format(dirr)
 data_dir = "../Neutrophil/{}/data".format(dirr)
 out_dir = "../Neutrophil/{}/out".format(dirr)
 LOG_DIR = "../Neutrophil/{}".format(dirr)
+
+try:
+    os.mkdir(METAGRAPH_DIR)
+except(FileExistsError):
+    pass
+
+try:
+    os.mkdir(data_dir)
+except(FileExistsError):
+    pass
+
+try:
+    os.mkdir(out_dir)
+except(FileExistsError):
+    pass
+
+try:
+    os.mkdir(LOG_DIR)
+except(FileExistsError):
+    pass
 
 
 def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
@@ -111,7 +130,7 @@ def py_map2jpg(imgmap, rang, colorMap):
     return cv2.applyColorMap(heatmap_x, cv2.COLORMAP_JET)
 
 
-def CAM(net, w, pred, x, path, name):
+def CAM(net, w, pred, x, path, name, prlista):
     DIR = "../Neutrophil/{}/out/{}_posimg".format(path, name)
     DIRR = "../Neutrophil/{}/out/{}_negimg".format(path, name)
 
@@ -128,6 +147,10 @@ def CAM(net, w, pred, x, path, name):
     pdx = np.asmatrix(pred)
 
     prl = (pdx[:,1] > 0.5).astype('uint8')
+
+    prlista.extend(prl)
+
+    newprlist = prlista
 
     for ij in range(len(prl)):
 
@@ -213,6 +236,7 @@ def CAM(net, w, pred, x, path, name):
                 # cv2.imwrite(imname1, a)
                 # cv2.imwrite(imname2, b)
                 cv2.imwrite(imname3, full)
+    return newprlist
 
 
 def test(tenum, tec, to_reload=None):
@@ -240,6 +264,8 @@ def test(tenum, tec, to_reload=None):
 
     print("Loaded! Ready for test!", flush=True)
 
+    prlist = []
+
     for a in range(tenum):
 
         aa = str(a + 1)
@@ -248,38 +274,49 @@ def test(tenum, tec, to_reload=None):
 
         HET = load_HE_data(train_dat_name=tdat_f, valid_dat_name=tdat_f)
 
-        ppp = int(5000 / 1024)
+        if tec >= 5000:
 
-        if tec > 5000:
-
-            for b in range(ppp):
-                bb = str(b + 1)
-
-                x = HET.validation.next_batch(1024)
+            for b in range(5):
+                x = HET.validation.next_batch(1000)
                 print('Test:')
                 te, tenet, tew = m.inference(x)
-                CAM(tenet, tew, te, x, dirr, 'Test_{}'.format(bb))
+                prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist)
 
-            tec = tec - 5000
-
-
-        elif tec in range(1024, 5001):
-            mppp = int(tec / 1024)
+        elif tec in range(1000, 5000):
+            mppp = int(tec / 1000)+1
 
             for b in range(mppp):
-                bb = str(b + 1 + a * 5)
 
-                x, y = HET.validation.next_batch(1024)
+                if b == mppp -1:
+                    x = HET.validation.next_batch(tec%1000)
+                else:
+                    x = HET.validation.next_batch(1000)
                 print('Test:')
                 te, tenet, tew = m.inference(x)
-                CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+                prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist)
 
         else:
-            print("Not enough for a test batch!")
+            x, y = HET.validation.next_batch(tec)
+            print('Test:')
+            te, tenet, tew = m.inference(x)
+            prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist)
+
+    return prlist
 
 # cut tiles with coordinates in the name (exclude white)
 
-get_tile.tile()
+if not os.path.isfile(data_dir+'/dict.csv'):
+    get_tile.tile(image_file=sys.argv[6], outdir = METAGRAPH_DIR)
+
+dict = pd.read_csv(data_dir+'/dict.csv', header=0)
+tec = len(dict["num"])
+tenum = int(tec/5000)+1
+listfinal = test(tenum, tec, to_reload=modeltoload)
+se = pd.Series(listfinal)
+dict['prediction'] = se
+dict.to_csv(out_dir+'/finaldict.csv', index = False)
+
+start_time = time.time()
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
