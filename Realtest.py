@@ -317,7 +317,7 @@ if not os.path.isfile(data_dir+'/dict.csv'):
     get_tile.tile(image_file=imgfile, outdir = METAGRAPH_DIR)
 
 dict = pd.read_csv(data_dir+'/dict.csv', header=0)
-tec = len(dict["num"])
+tec = len(dict["Num"])
 tenum = int(tec/5000)+1
 
 print("--- %s seconds ---" % (time.time() - start_time))
