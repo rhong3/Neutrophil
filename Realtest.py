@@ -42,13 +42,19 @@ HYPERPARAMS = {
     "dropout": 0.8,
     "learning_rate": 1E-4
 }
-METAGRAPH_DIR = "../Neutrophil/{}".format(dirr)
+METAGRAPH_DIR = "../Neutrophil"
 data_dir = "../Neutrophil/{}/data".format(dirr)
 out_dir = "../Neutrophil/{}/out".format(dirr)
-LOG_DIR = "../Neutrophil/{}".format(dirr)
+LOG_DIR = "../Neutrophil"
+file_DIR = "../Neutrophil/{}".format(dirr)
 
 try:
     os.mkdir(METAGRAPH_DIR)
+except(FileExistsError):
+    pass
+
+try:
+    os.mkdir(file_DIR)
 except(FileExistsError):
     pass
 
