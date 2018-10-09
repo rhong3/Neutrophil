@@ -320,7 +320,7 @@ def test(tenum, tec, to_reload=None):
 start_time = time.time()
 
 if not os.path.isfile(data_dir+'/dict.csv'):
-    get_tile.tile(image_file=imgfile, outdir = METAGRAPH_DIR)
+    get_tile.tile(image_file=imgfile, outdir = file_DIR)
 
 dict = pd.read_csv(data_dir+'/dict.csv', header=0)
 tec = len(dict["Num"])
