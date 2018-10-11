@@ -651,10 +651,9 @@ if __name__ == "__main__":
         except(FileExistsError):
             pass
 
-    if not os.path.isfile(img_dir+'/te_sample.csv'):
-        _, _, _, tes, trs = Sample_prep.samplesum()
-        tes.to_csv(img_dir+'/te_sample.csv', index=False)
-        trs.to_csv(img_dir+'/tr_sample.csv', index=False)
+    _, _, _, tes, trs = Sample_prep.samplesum()
+    tes.to_csv(img_dir+'/te_sample.csv', index=False)
+    trs.to_csv(img_dir+'/tr_sample.csv', index=False)
     trc, tec, trnum, tenum = counters(img_dir)
 
     try:
