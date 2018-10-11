@@ -6,6 +6,7 @@ RH 0717
 import os
 import pandas as pd
 import sklearn.utils as sku
+import numpy as np
 
 
 pos_path = '../Neutrophil/All_Tiles_final/pos'
@@ -36,28 +37,43 @@ def samplesum():
     negpd = []
     telist = []
     trlist = []
-    m = 1
-    n = 1
+    postemplist = []
+    negtemplist = []
+
     for i in poslist:
         posdir = pos_pattern.format(i)
         pdp = [posdir, 1]
         pospd.append(pdp)
         totpd.append(pdp)
-        if m < postenum:
-            telist.append(pdp)
-        else:
-            trlist.append(pdp)
-        m += 1
+        postemplist.append(pdp)
+        if len(postemplist) == 17:
+            if len(telist) < postenum:
+                s = np.random.random_sample()
+                if s > 0.85:
+                    telist.extend(postemplist)
+                else:
+                    trlist.extend(postemplist)
+            else:
+                trlist.extend(postemplist)
+            postemplist = []
+
     for j in neglist:
         negdir = neg_pattern.format(j)
         pdn = [negdir, 0]
         negpd.append(pdn)
         totpd.append(pdn)
-        if n < negtenum:
-            telist.append(pdn)
-        else:
-            trlist.append(pdn)
-        n += 1
+        negtemplist.append(pdn)
+        if len(negtemplist) == 4:
+            if len(telist) < negtenum+postenum:
+                s = np.random.random_sample()
+                if s > 0.85:
+                    telist.extend(negtemplist)
+                else:
+                    trlist.extend(negtemplist)
+            else:
+                trlist.extend(negtemplist)
+            negtemplist = []
+
     totpd = pd.DataFrame(totpd, columns = ['path', 'label'])
     pospd = pd.DataFrame(pospd, columns = ['path', 'label'])
     negpd = pd.DataFrame(negpd, columns = ['path', 'label'])
