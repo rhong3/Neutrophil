@@ -13,14 +13,14 @@ import sys
 
 import numpy as np
 import tensorflow as tf
-import inception_v4
+import inception_v3
 
 slim = tf.contrib.slim
 
 
 class INCEPTION():
     """
-    Use the InceptionV4 architecture
+    Use the InceptionV3 architecture
 
     """
 
@@ -91,13 +91,18 @@ class INCEPTION():
 
         is_train = tf.placeholder_with_default(True, shape=[], name="is_train")
 
-        logits, nett, ww = inception_v4.inception_v4(x_in_reshape,
+        logits, nett, ww = inception_v3.inception_v3(x_in_reshape,
                                               num_classes=2,
                                               is_training=is_train,
                                               dropout_keep_prob=dropout,
+                                              min_depth=16,
+                                              depth_multiplier=1.0,
+                                              prediction_fn=slim.softmax,
+                                              spatial_squeeze=True,
                                               reuse=None,
                                               create_aux_logits=True,
-                                              scope='InceptionV4')
+                                              scope='InceptionV3',
+                                              global_pool=False)
 
         pred = tf.nn.softmax(logits, name="prediction")
 
@@ -106,7 +111,7 @@ class INCEPTION():
         pred_cost = tf.losses.softmax_cross_entropy(
             onehot_labels=onehot_labels, logits=logits)
 
-        tf.summary.scalar("InceptionV4_cost", pred_cost)
+        tf.summary.scalar("InceptionV3_cost", pred_cost)
 
         train_op = tf.contrib.layers.optimize_loss(
             loss=pred_cost,

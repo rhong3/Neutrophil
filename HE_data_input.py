@@ -13,7 +13,7 @@ class DataSet(object):
                images,
                labels,
                dtype=dtypes.float32,
-               reshape=True):
+               reshape=False):
 
     dtype = dtypes.as_dtype(dtype).base_dtype
     if dtype not in (dtypes.uint8, dtypes.float32):

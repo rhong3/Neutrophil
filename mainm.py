@@ -533,7 +533,7 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
         if md == 'IG':
             m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I2':
-            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+            m = cnnt.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I3':
             m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I4':

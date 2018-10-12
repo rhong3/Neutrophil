@@ -11,16 +11,13 @@ import os
 import sys
 import numpy as np
 import tensorflow as tf
-import HE_data_input
-import cnnm
-import cnng
-import cnni
-import cnnt
-import cnnir1
-import cnnir2
-import cnnva
-import cnnv16
-import cnnv19
+import TF_data_input
+import cnnm2
+import cnng2
+import cnni2
+import cnnt2
+import cnnir12
+import cnnir22
 import pandas as pd
 import sklearn as skl
 import matplotlib.pyplot as plt
@@ -129,8 +126,47 @@ def loader(totlist_dir):
     sys.stdout.flush()
 
 
-def tfreloader(path, ep, bs):
-    return imgs, lbs
+def tfreloader(mode, ep, bs):
+    filename = data_dir + '/' + mode + '.tfrecords'
+    with tf.Session() as sess:
+        feature = {mode + '/image': tf.FixedLenFeature([], tf.string),
+                   mode + '/label': tf.FixedLenFeature([], tf.int64)}
+        # Create a list of filenames and pass it to a queue
+        filename_queue = tf.train.string_input_producer([filename], num_epochs=ep)
+        # Define a reader and read the next record
+        reader = tf.TFRecordReader()
+        _, serialized_example = reader.read(filename_queue)
+        # Decode the record read by the reader
+        features = tf.parse_single_example(serialized_example, features=feature)
+        # Convert the image data from string back to the numbers
+        image = tf.decode_raw(features['train/image'], tf.float32)
+
+        # Cast label data into int32
+        label = tf.cast(features['train/label'], tf.int32)
+        # Reshape image data into the original shape
+        image = tf.reshape(image, [299, 299, 3])
+
+        # Creates batches by randomly shuffling tensors
+        imgs, lbs = tf.train.shuffle_batch([image, label], batch_size=bs, capacity=50000, num_threads=4,
+                                                min_after_dequeue=10000)
+
+        # Initialize all global and local variables
+        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+        sess.run(init_op)
+        # Create a coordinator and run all QueueRunner objects
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
+        img, lbl = sess.run([imgs, lbs])
+        img = img.astype(np.uint8)
+
+        # Stop the threads
+        coord.request_stop()
+
+        # Wait for threads to stop
+        coord.join(threads)
+        sess.close()
+
+    return img, lbl
 
 #
 # def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
@@ -369,25 +405,19 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
     if test:  # restore
 
         if md == 'IG':
-            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I2':
-            m = cnnt.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnnt2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I3':
-            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnnm2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I4':
-            m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnni2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'IR1':
-            m = cnnir1.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnnir12.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'IR2':
-            m = cnnir2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
-        elif md == 'VA':
-            m = cnnva.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
-        elif md == 'V16':
-            m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
-        elif md == 'V19':
-            m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnnir22.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         else:
-            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
 
         print("Loaded! Ready for test!", flush=True)
 
@@ -441,25 +471,19 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
     elif to_reload:
 
         if md == 'IG':
-            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I2':
-            m = cnnt.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnnt2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I3':
-            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnnm2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'I4':
-            m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnni2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'IR1':
-            m = cnnir1.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnnir12.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         elif md == 'IR2':
-            m = cnnir2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
-        elif md == 'VA':
-            m = cnnva.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
-        elif md == 'V16':
-            m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
-        elif md == 'V19':
-            m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnnir22.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
         else:
-            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
+            m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
 
         print("Loaded! Restart training.", flush=True)
 
@@ -562,25 +586,19 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
     else:  # train
 
         if md == 'IG':
-            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+            m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I2':
-            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+            m = cnnt2.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I3':
-            m = cnnm.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+            m = cnnm2.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'I4':
-            m = cnni.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+            m = cnni2.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'IR1':
-            m = cnnir1.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+            m = cnnir12.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         elif md == 'IR2':
-            m = cnnir2.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
-        elif md == 'VA':
-            m = cnnva.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
-        elif md == 'V16':
-            m = cnnv16.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
-        elif md == 'V19':
-            m = cnnv19.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+            m = cnnir22.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
         else:
-            m = cnng.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
+            m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
 
         print("Start training!")
 
