@@ -67,77 +67,108 @@ def counters(totlist_dir):
 
     return trcc, tecc, trnumm, tenumm
 
+
+def load_image(addr):
+    img = cv2.imread(addr)
+    img = img.astype(np.float32)
+    return img
+
+
+def _int64_feature(value):
+  return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+def _bytes_feature(value):
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+
 def loader(totlist_dir):
-    dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
-    tile_lab = []
     trlist = pd.read_csv(totlist_dir+'/tr_sample.csv', header=0)
     telist = pd.read_csv(totlist_dir+'/te_sample.csv', header=0)
-    f = 1
-    for index, row in trlist.iterrows():
-        image = Image.open(row['path'])
-        pix = np.array(image)[:, :, 0:3]
-        dat = np.vstack([dat, pix.flatten()])
-        tile_lab.append(row['label'])
-        if len(tile_lab) == 5000 or index == len(trlist['label']) - 1:
-            np.savetxt(data_dir + '/data_{}.txt'.format(f), dat, fmt='%i', delimiter='\t')
-            np.savetxt(data_dir + '/lab_{}.txt'.format(f), tile_lab, fmt='%i', delimiter='\t')
-            dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
-            tile_lab = []
-            f += 1
+    trimlist = trlist['path'].values.tolist()
+    trlblist = trlist['label'].values.tolist()
+    teimlist = telist['path'].values.tolist()
+    telblist = telist['label'].values.tolist()
 
-    dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
-    tile_lab = []
-    g = 1
-    for index, row in telist.iterrows():
-        image = Image.open(row['path'])
-        pix = np.array(image)[:, :, 0:3]
-        dat = np.vstack([dat, pix.flatten()])
-        tile_lab.append(row['label'])
-        if len(tile_lab) == 5000 or index == len(telist['label']) - 1:
-            np.savetxt(data_dir + '/data_test_{}.txt'.format(g), dat, fmt='%i', delimiter='\t')
-            np.savetxt(data_dir + '/lab_test_{}.txt'.format(g), tile_lab, fmt='%i', delimiter='\t')
-            dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
-            tile_lab = []
-            g += 1
+    train_filename = data_dir+'/train.tfrecords'
+    writer = tf.python_io.TFRecordWriter(train_filename)
+    for i in range(len(trimlist)):
+        if not i % 1000:
+            sys.stdout.flush()
+        # Load the image
+        img = load_image(trimlist[i])
+        label = trlblist[i]
+        # Create a feature
+        feature = {'train/label': _int64_feature(label),
+                   'train/image': _bytes_feature(tf.compat.as_bytes(img.tostring()))}
+        # Create an example protocol buffer
+        example = tf.train.Example(features=tf.train.Features(feature=feature))
 
-# to_load =
+        # Serialize to string and write on the file
+        writer.write(example.SerializeToString())
 
-def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
-    def iter_func():
-        with open(filename, 'r') as infile:
-            for _ in range(skiprows):
-                next(infile)
-            for line in infile:
-                line = line.rstrip().split(delimiter)
-                for item in line:
-                    yield dtype(item)
-        iter_loadtxt.rowlength = len(line)
+    writer.close()
+    sys.stdout.flush()
 
-    data = np.fromiter(iter_func(), dtype=dtype)
-    data = data.reshape((-1, iter_loadtxt.rowlength))
-    return data
+    test_filename = data_dir+'/test.tfrecords'
+    writer = tf.python_io.TFRecordWriter(test_filename)
+    for i in range(len(teimlist)):
+        if not i % 1000:
+            sys.stdout.flush()
+        # Load the image
+        img = load_image(teimlist[i])
+        label = telblist[i]
+        # Create a feature
+        feature = {'test/label': _int64_feature(label),
+                   'tset/image': _bytes_feature(tf.compat.as_bytes(img.tostring()))}
+        # Create an example protocol buffer
+        example = tf.train.Example(features=tf.train.Features(feature=feature))
+
+        # Serialize to string and write on the file
+        writer.write(example.SerializeToString())
+
+    writer.close()
+    sys.stdout.flush()
 
 
-def load_HE_data(train_dat_name, train_lab_name, valid_dat_name, valid_lab_name):
-    train_dat = iter_loadtxt(train_dat_name, dtype=int, delimiter='\t')
-    valid_dat = iter_loadtxt(valid_dat_name, dtype=int, delimiter='\t')
-    train_lab = iter_loadtxt(train_lab_name, dtype=int, delimiter='\t')
-    valid_lab = iter_loadtxt(valid_lab_name, dtype=int, delimiter='\t')
-    size = train_lab.shape[0]
+def tfreloader(path, ep, bs):
+    return imgs, lbs
 
-    class DataSets(object):
-        pass
+#
+# def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
+#     def iter_func():
+#         with open(filename, 'r') as infile:
+#             for _ in range(skiprows):
+#                 next(infile)
+#             for line in infile:
+#                 line = line.rstrip().split(delimiter)
+#                 for item in line:
+#                     yield dtype(item)
+#         iter_loadtxt.rowlength = len(line)
+#
+#     data = np.fromiter(iter_func(), dtype=dtype)
+#     data = data.reshape((-1, iter_loadtxt.rowlength))
+#     return data
 
-    data_sets = DataSets()
 
-    data_sets.train = HE_data_input.DataSet(images=train_dat,
-                                            labels=train_lab,
-                                            reshape=False)
-
-    data_sets.validation = HE_data_input.DataSet(images=valid_dat,
-                                                 labels=valid_lab,
-                                                 reshape=False)
-    return data_sets, size
+# def load_HE_data(train_dat_name, train_lab_name, valid_dat_name, valid_lab_name):
+#     train_dat = iter_loadtxt(train_dat_name, dtype=int, delimiter='\t')
+#     valid_dat = iter_loadtxt(valid_dat_name, dtype=int, delimiter='\t')
+#     train_lab = iter_loadtxt(train_lab_name, dtype=int, delimiter='\t')
+#     valid_lab = iter_loadtxt(valid_lab_name, dtype=int, delimiter='\t')
+#     size = train_lab.shape[0]
+#
+#     class DataSets(object):
+#         pass
+#
+#     data_sets = DataSets()
+#
+#     data_sets.train = HE_data_input.DataSet(images=train_dat,
+#                                             labels=train_lab,
+#                                             reshape=False)
+#
+#     data_sets.validation = HE_data_input.DataSet(images=valid_dat,
+#                                                  labels=valid_lab,
+#                                                  reshape=False)
+#     return data_sets, size
 
 
 def metrics(pdx, tl, path, name):
@@ -561,10 +592,6 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
             lab_f = data_dir + '/lab_{}.txt'.format(aa)
 
-            HE, sz = load_HE_data(train_dat_name=dat_f,
-                              train_lab_name=lab_f,
-                              valid_dat_name=dat_f,
-                              valid_lab_name=lab_f)
 
             if sz < 4998:
                 modITER = int(sz * reITER / 5000)

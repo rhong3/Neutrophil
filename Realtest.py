@@ -336,11 +336,5 @@ dict.to_csv(out_dir+'/finaldict.csv', index = False)
 
 
 
-
-
-# load 5000 each time until it is done
-
-
-
 # output heat map of pos and neg; and output CAM and assemble them to a big graph.
 
