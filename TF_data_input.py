@@ -22,7 +22,7 @@ class DataSet(object):
         self._index_in_epoch = 0
         self._num_examples = count
 
-    def next_batch(self):
+    def next_batch(self, batch_size=self._batchsize):
         with tf.Session() as sess:
             feature = {self._mode + '/image': tf.FixedLenFeature([], tf.string),
                        self._mode + '/label': tf.FixedLenFeature([], tf.int64)}
@@ -42,7 +42,7 @@ class DataSet(object):
             image = tf.reshape(image, [299, 299, 3])
 
             # Creates batches by randomly shuffling tensors
-            imgs, lbs = tf.train.shuffle_batch([image, label], batch_size=self._batchsize, capacity=50000, num_threads=4,
+            imgs, lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=4,
                                                min_after_dequeue=10000)
 
             self._images = image
@@ -57,31 +57,15 @@ class DataSet(object):
             self.img, self.lbl = sess.run([imgs, lbs])
             self.img = self.img.astype(np.uint8)
 
-            # Stop the threads
-            coord.request_stop()
-
-            # Wait for threads to stop
-            coord.join(threads)
-            sess.close()
+            # # Stop the threads
+            # coord.request_stop()
+            #
+            # # Wait for threads to stop
+            # coord.join(threads)
+            # sess.close()
 
         return self.img, self.lbl
 
-        # start = self._index_in_epoch
-        # self._index_in_epoch += batch_size
-        # if self._index_in_epoch > self._num_examples:
-        #     # Finished epoch
-        #     self._epochs_completed += 1
-        #     # Shuffle the data
-        #     perm = np.arange(self._num_examples)
-        #     np.random.shuffle(perm)
-        #     self._images = self._images[perm]
-        #     self._labels = self._labels[perm]
-        #     # Start next epoch
-        #     start = 0
-        #     self._index_in_epoch = batch_size
-        #     assert batch_size <= self._num_examples
-        # end = self._index_in_epoch
-        # return self._images[start:end], self._labels[start:end]
 
     @property
     def images(self):
