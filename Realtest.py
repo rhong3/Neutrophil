@@ -330,6 +330,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 
 listfinal = test(tenum, tec, to_reload=modeltoload)
 se = pd.Series(listfinal)
+se = se.str.replace(r'\D+', '')
 dict['prediction'] = se
 dict.to_csv(out_dir+'/finaldict.csv', index = False)
 
