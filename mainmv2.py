@@ -128,45 +128,19 @@ def loader(totlist_dir):
 
 def tfreloader(mode, ep, bs):
     filename = data_dir + '/' + mode + '.tfrecords'
-    with tf.Session() as sess:
-        feature = {mode + '/image': tf.FixedLenFeature([], tf.string),
-                   mode + '/label': tf.FixedLenFeature([], tf.int64)}
-        # Create a list of filenames and pass it to a queue
-        filename_queue = tf.train.string_input_producer([filename], num_epochs=ep)
-        # Define a reader and read the next record
-        reader = tf.TFRecordReader()
-        _, serialized_example = reader.read(filename_queue)
-        # Decode the record read by the reader
-        features = tf.parse_single_example(serialized_example, features=feature)
-        # Convert the image data from string back to the numbers
-        image = tf.decode_raw(features['train/image'], tf.float32)
+    ctr, cte, _, _ = counters(img_dir)
+    if mode == 'train':
+        ct = ctr
+    else:
+        ct = cte
+    class DataSets(object):
+        pass
 
-        # Cast label data into int32
-        label = tf.cast(features['train/label'], tf.int32)
-        # Reshape image data into the original shape
-        image = tf.reshape(image, [299, 299, 3])
+    datasets = DataSets()
+    datasets.train = TF_data_input.DataSet(mode, filename, ep, bs, ct)
+    datasets.validation = TF_data_input.DataSet(mode, filename, ep, bs, ct)
 
-        # Creates batches by randomly shuffling tensors
-        imgs, lbs = tf.train.shuffle_batch([image, label], batch_size=bs, capacity=50000, num_threads=4,
-                                                min_after_dequeue=10000)
-
-        # Initialize all global and local variables
-        init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-        sess.run(init_op)
-        # Create a coordinator and run all QueueRunner objects
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
-        img, lbl = sess.run([imgs, lbs])
-        img = img.astype(np.uint8)
-
-        # Stop the threads
-        coord.request_stop()
-
-        # Wait for threads to stop
-        coord.join(threads)
-        sess.close()
-
-    return img, lbl
+    return datasets
 
 #
 # def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):

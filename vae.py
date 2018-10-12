@@ -1,4 +1,4 @@
-lfrom datetime import datetime
+from datetime import datetime
 import os
 import re
 import sys
@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from layers import Dense
-import plot
+
 from utils import composeAll, print_
 
 
