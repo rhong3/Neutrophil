@@ -18,11 +18,10 @@ class DataSet(object):
         self._filename = filename
         self._maxep = ep
         self._batchsize = bs
-        self._epochs_completed = 0
         self._index_in_epoch = 0
         self._num_examples = count
 
-    def next_batch(self, batch_size=self._batchsize):
+    def next_batch(self, batch_size):
         with tf.Session() as sess:
             feature = {self._mode + '/image': tf.FixedLenFeature([], tf.string),
                        self._mode + '/label': tf.FixedLenFeature([], tf.int64)}
@@ -34,29 +33,31 @@ class DataSet(object):
             # Decode the record read by the reader
             features = tf.parse_single_example(serialized_example, features=feature)
             # Convert the image data from string back to the numbers
-            image = tf.decode_raw(features['train/image'], tf.float32)
+            image = tf.decode_raw(features[self._mode + '/image'], tf.float32)
 
             # Cast label data into int32
-            label = tf.cast(features['train/label'], tf.int32)
+            label = tf.cast(features[self._mode + '/label'], tf.int32)
             # Reshape image data into the original shape
             image = tf.reshape(image, [299, 299, 3])
 
             # Creates batches by randomly shuffling tensors
-            imgs, lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=4,
+            self.imgs, self.lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=4,
                                                min_after_dequeue=10000)
 
             self._images = image
             self._labels = label
 
-            # Initialize all global and local variables
-            init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-            sess.run(init_op)
-            # Create a coordinator and run all QueueRunner objects
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
-            self.img, self.lbl = sess.run([imgs, lbs])
-            self.img = self.img.astype(np.uint8)
 
+            #
+            # # Initialize all global and local variables
+            # init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+            # sess.run(init_op)
+            # # Create a coordinator and run all QueueRunner objects
+            # coord = tf.train.Coordinator()
+            # threads = tf.train.start_queue_runners(coord=coord)
+            # self.img, self.lbl = sess.run([imgs, lbs])
+            # self.img = self.img.astype(np.uint8)
+            #
             # # Stop the threads
             # coord.request_stop()
             #
@@ -64,7 +65,7 @@ class DataSet(object):
             # coord.join(threads)
             # sess.close()
 
-        return self.img, self.lbl
+        return self.imgs, self.lbs, self._num_examples
 
 
     @property
@@ -78,7 +79,3 @@ class DataSet(object):
     @property
     def num_examples(self):
         return self._num_examples
-
-    @property
-    def epochs_completed(self):
-        return self._epochs_completed

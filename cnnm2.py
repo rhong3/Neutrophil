@@ -132,7 +132,23 @@ class INCEPTION():
 
 
     def get_global_step(self, X):
-        x, y = X.train.next_batch(self.batch_size)
+        x_list, y_list, _ = X.train.next_batch(self.batch_size)
+        with tf.Session() as sess:
+            # Initialize all global and local variables
+            init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+            sess.run(init_op)
+            # Create a coordinator and run all QueueRunner objects
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(coord=coord)
+            x, y = sess.run([x_list, y_list])
+            x = x.astype(np.uint8)
+
+            # Stop the threads
+            coord.request_stop()
+
+            # Wait for threads to stop
+            coord.join(threads)
+            sess.close()
 
         feed_dict = {self.x_in: x, self.y_in: y,
                      self.dropout_: self.dropout}
@@ -158,9 +174,18 @@ class INCEPTION():
             err_train = 0
             now = datetime.now().isoformat()[11:]
             print("------- Training begin: {} -------\n".format(now), flush=True)
+            x_list, y_list, nums = X.train.next_batch(self.batch_size)
 
             while True:
-                x, y = X.train.next_batch(self.batch_size)
+                with tf.Session() as sess:
+                    # Initialize all global and local variables
+                    init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+                    sess.run(init_op)
+                    # Create a coordinator and run all QueueRunner objects
+                    coord = tf.train.Coordinator()
+                    threads = tf.train.start_queue_runners(coord=coord)
+                    x, y = sess.run([x_list, y_list])
+                    x = x.astype(np.uint8)
 
                 feed_dict = {self.x_in: x, self.y_in: y,
                              self.dropout_: self.dropout}
@@ -195,7 +220,24 @@ class INCEPTION():
                 if i % 1000 == 0 and verbose:  # and i >= 10000:
 
                     if cross_validate:
-                        x, y = X.validation.next_batch(self.batch_size)
+                        xv_list, yv_list, _ = X.validation.next_batch(self.batch_size)
+                        with tf.Session() as sess:
+                            # Initialize all global and local variables
+                            init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+                            sess.run(init_op)
+                            # Create a coordinator and run all QueueRunner objects
+                            coord = tf.train.Coordinator()
+                            threads = tf.train.start_queue_runners(coord=coord)
+                            x, y = sess.run([xv_list, yv_list])
+                            x = x.astype(np.uint8)
+
+                            # Stop the threads
+                            coord.request_stop()
+
+                            # Wait for threads to stop
+                            coord.join(threads)
+                            sess.close()
+
                         feed_dict = {self.x_in: x, self.y_in: y}
                         fetches = [self.pred_cost, self.merged_summary]
                         valid_cost, valid_summary = self.sesh.run(fetches, feed_dict)
@@ -208,7 +250,23 @@ class INCEPTION():
                 elif i == max_iter and verbose:  # and i >= 10000:
 
                     if cross_validate:
-                        x, y = X.validation.next_batch(self.batch_size)
+                        xv_list, yv_list, _ = X.validation.next_batch(self.batch_size)
+                        with tf.Session() as sess:
+                            # Initialize all global and local variables
+                            init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+                            sess.run(init_op)
+                            # Create a coordinator and run all QueueRunner objects
+                            coord = tf.train.Coordinator()
+                            threads = tf.train.start_queue_runners(coord=coord)
+                            x, y = sess.run([xv_list, yv_list])
+                            x = x.astype(np.uint8)
+
+                            # Stop the threads
+                            coord.request_stop()
+
+                            # Wait for threads to stop
+                            coord.join(threads)
+                            sess.close()
                         feed_dict = {self.x_in: x, self.y_in: y}
                         fetches = [self.pred_cost, self.merged_summary]
                         valid_cost, valid_summary = self.sesh.run(fetches, feed_dict)
@@ -226,9 +284,17 @@ class INCEPTION():
                     saver.save(self.sesh, interfile, global_step=self.step)
                 """
 
-                if i >= max_iter or X.train.epochs_completed >= max_epochs:
+
+                if i >= max_iter or i >= nums*max_epochs/self.batch_size:
+                    # Stop the threads
+                    coord.request_stop()
+
+                    # Wait for threads to stop
+                    coord.join(threads)
+                    sess.close()
+
                     print("final avg cost (@ step {} = epoch {}): {}".format(
-                        i, X.train.epochs_completed, err_train / i), flush=True)
+                        i, i/nums*self.batch_size, err_train / i), flush=True)
 
                     now = datetime.now().isoformat()[11:]
                     print("------- Training end: {} -------\n".format(now), flush=True)
@@ -247,8 +313,9 @@ class INCEPTION():
                     break
 
         except(KeyboardInterrupt):
+
             print("final avg cost (@ step {} = epoch {}): {}".format(
-                i, X.train.epochs_completed, err_train / i), flush=True)
+                i, i/nums*self.batch_size, err_train / i), flush=True)
 
             now = datetime.now().isoformat()[11:]
             print("------- Training end: {} -------\n".format(now), flush=True)

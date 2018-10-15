@@ -28,10 +28,10 @@ import Sample_prep
 
 dirr = sys.argv[1]
 bs = sys.argv[2]
-iter = sys.argv[3]
+ep = sys.argv[3]
 md = sys.argv[4]
 bs = int(bs)
-iter = int(iter)
+ep = int(ep)
 
 IMG_DIM = 299
 
@@ -44,8 +44,8 @@ HYPERPARAMS = {
     "learning_rate": 1E-4
 }
 
-MAX_ITER = iter
-MAX_EPOCHS = np.inf
+MAX_ITER = np.inf
+MAX_EPOCHS = ep
 
 img_dir = '../Neutrophil/All_Tiles_final'
 LOG_DIR = "../Neutrophil/{}".format(dirr)
@@ -395,6 +395,8 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
         print("Loaded! Ready for test!", flush=True)
 
+        HET = tfreloader('test', ep, bs)
+
         for a in range(tenum):
 
             aa = str(a+1)
@@ -403,7 +405,7 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
             tlab_f = data_dir + '/lab_test_{}.txt'.format(aa)
 
-            HET, _ = load_HE_data(train_dat_name=tdat_f,
+            HET = load_HE_data(train_dat_name=tdat_f,
                                train_lab_name=tlab_f,
                                valid_dat_name=tdat_f,
                                valid_lab_name=tlab_f)
@@ -576,89 +578,69 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
 
         print("Start training!")
 
-        for a in range(trnum):
+        HE = tfreloader('train', ep, bs)
+        m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS, verbose=True, save=True, outdir=METAGRAPH_DIR)
 
-            aa = str(a + 1)
-
-            dat_f = data_dir + '/data_{}.txt'.format(aa)
-
-            lab_f = data_dir + '/lab_{}.txt'.format(aa)
-
-
-            if sz < 4998:
-                modITER = int(sz * reITER / 5000)
-                MAX_ITER = old_ITER + reITER * a + modITER
-
-            else:
-                MAX_ITER = old_ITER + reITER * (a + 1)
-
-            if a == trnum-1:
-                m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
-                        verbose=True, save=True, outdir=METAGRAPH_DIR)
-            else:
-                m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
-                        verbose=True, save=False, outdir=METAGRAPH_DIR)
-
-            if trc > 1026:
-                x, y = HE.validation.next_batch(1024)
-                print('Generating metrics')
-                tr, trnet, trw = m.inference(x)
-                CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
-                metrics(tr, y, dirr, 'Train_{}'.format(aa))
-            elif trc in range(50, 1026):
-                x, y = HE.validation.next_batch(trc)
-                print('Generating metrics')
-                tr, trnet, trw = m.inference(x)
-                CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
-                metrics(tr, y, dirr, 'Train_{}'.format(aa))
-            else:
-                print("The last training set is too small! No metrics generated.")
-
-            trc -= 5000
-
-        for at in range(tenum):
-
-            aat = str(at + 1)
-
-            tdat_f = data_dir + '/data_test_{}.txt'.format(aat)
-
-            tlab_f = data_dir + '/lab_test_{}.txt'.format(aat)
-
-            HET, _ = load_HE_data(train_dat_name=tdat_f,
-                               train_lab_name=tlab_f,
-                               valid_dat_name=tdat_f,
-                               valid_lab_name=tlab_f)
-
-            ppp = int(5000 / 1024)
-
-            if tec > 5000:
-
-                for b in range(ppp):
-                    bb = str(b + 1)
-
-                    x, y = HET.validation.next_batch(1024)
-                    print('Test:')
-                    te, tenet, tew = m.inference(x)
-                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
-                    metrics(te, y, dirr, 'Test_{}'.format(bb))
-
-                tec = tec - 5000
-
-
-            elif tec in range(1024, 5001):
-                mppp = int(tec / 1024)
-
-                for b in range(mppp):
-                    bb = str(b + 1 + at * 5)
-
-                    x, y = HET.validation.next_batch(1024)
-                    print('Test:')
-                    te, tenet, tew = m.inference(x)
-                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
-                    metrics(te, y, dirr, 'Test_{}'.format(bb))
-
-            else:
-                print("Not enough for a test batch!")
+        #     if trc > 1026:
+        #         x, y = HE.validation.next_batch(1024)
+        #         print('Generating metrics')
+        #         tr, trnet, trw = m.inference(x)
+        #         CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
+        #         metrics(tr, y, dirr, 'Train_{}'.format(aa))
+        #     elif trc in range(50, 1026):
+        #         x, y = HE.validation.next_batch(trc)
+        #         print('Generating metrics')
+        #         tr, trnet, trw = m.inference(x)
+        #         CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
+        #         metrics(tr, y, dirr, 'Train_{}'.format(aa))
+        #     else:
+        #         print("The last training set is too small! No metrics generated.")
+        #
+        #     trc -= 5000
+        #
+        # for at in range(tenum):
+        #
+        #     aat = str(at + 1)
+        #
+        #     tdat_f = data_dir + '/data_test_{}.txt'.format(aat)
+        #
+        #     tlab_f = data_dir + '/lab_test_{}.txt'.format(aat)
+        #
+        #     HET, _ = load_HE_data(train_dat_name=tdat_f,
+        #                        train_lab_name=tlab_f,
+        #                        valid_dat_name=tdat_f,
+        #                        valid_lab_name=tlab_f)
+        #
+        #     ppp = int(5000 / 1024)
+        #
+        #     if tec > 5000:
+        #
+        #         for b in range(ppp):
+        #             bb = str(b + 1)
+        #
+        #             x, y = HET.validation.next_batch(1024)
+        #             print('Test:')
+        #             te, tenet, tew = m.inference(x)
+        #             CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+        #             metrics(te, y, dirr, 'Test_{}'.format(bb))
+        #
+        #         tec = tec - 5000
+        #
+        #
+        #     elif tec in range(1024, 5001):
+        #         mppp = int(tec / 1024)
+        #
+        #         for b in range(mppp):
+        #             bb = str(b + 1 + at * 5)
+        #
+        #             x, y = HET.validation.next_batch(1024)
+        #             print('Test:')
+        #             te, tenet, tew = m.inference(x)
+        #             CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
+        #             metrics(te, y, dirr, 'Test_{}'.format(bb))
+        #
+        #     else:
+        #         print("Not enough for a test batch!")
 
 
 if __name__ == "__main__":
