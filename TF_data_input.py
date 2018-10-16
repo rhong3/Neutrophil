@@ -41,7 +41,7 @@ class DataSet(object):
             image = tf.reshape(image, [299, 299, 3])
 
             # Creates batches by randomly shuffling tensors
-            self.imgs, self.lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=1,
+            self.imgs, self.lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=4,
                                                min_after_dequeue=10000)
 
             self._images = image

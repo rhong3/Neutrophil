@@ -191,12 +191,11 @@ class INCEPTION():
                                      self.dropout_: self.dropout}
 
                         fetches = [self.merged_summary, self.logits, self.pred,
-                                   self.pred_cost, self.global_step]
+                                   self.pred_cost, self.global_step, self.train_op]
 
-                        summary, logits, pred, cost, i = self.sesh.run(fetches, feed_dict)
+                        summary, logits, pred, cost, i, _ = self.sesh.run(fetches, feed_dict)
 
                         self.train_logger.add_summary(summary, i)
-                        print(i)
                         err_train += cost
 
                         if i % 1000 == 0 and verbose:
@@ -221,7 +220,7 @@ class INCEPTION():
                                     xv = xv.astype(np.uint8)
 
                                     # Stop the threads
-                                    vcoord.request_stop()
+                                    # vcoord.request_stop()
 
                                     # Wait for threads to stop
                                     # vcoord.join(vthreads)
@@ -251,7 +250,7 @@ class INCEPTION():
                                     xv = xv.astype(np.uint8)
 
                                     # Stop the threads
-                                    vcoord.request_stop()
+                                    # vcoord.request_stop()
 
                                     # Wait for threads to stop
                                     # vcoord.join(vthreads)
@@ -277,7 +276,7 @@ class INCEPTION():
                             coord.request_stop()
 
                             # Wait for threads to stop
-                            # coord.join(threads)
+                            coord.join(threads)
                             sessa.close()
 
                             print("final avg cost (@ step {} = epoch {}): {}".format(
