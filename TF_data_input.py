@@ -41,32 +41,13 @@ class DataSet(object):
             image = tf.reshape(image, [299, 299, 3])
 
             # Creates batches by randomly shuffling tensors
-            self.imgs, self.lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=4,
+            self.imgs, self.lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=1,
                                                min_after_dequeue=10000)
 
             self._images = image
             self._labels = label
 
-
-            #
-            # # Initialize all global and local variables
-            # init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-            # sess.run(init_op)
-            # # Create a coordinator and run all QueueRunner objects
-            # coord = tf.train.Coordinator()
-            # threads = tf.train.start_queue_runners(coord=coord)
-            # self.img, self.lbl = sess.run([imgs, lbs])
-            # self.img = self.img.astype(np.uint8)
-            #
-            # # Stop the threads
-            # coord.request_stop()
-            #
-            # # Wait for threads to stop
-            # coord.join(threads)
-            # sess.close()
-
         return self.imgs, self.lbs, self._num_examples
-
 
     @property
     def images(self):
