@@ -302,6 +302,8 @@ class INCEPTION():
                         except(AttributeError):  # not logging
                             print('Not logging', flush=True)
 
+                        break
+
         except(KeyboardInterrupt):
 
             print("final avg cost (@ step {} = epoch {}): {}".format(
