@@ -40,9 +40,13 @@ class DataSet(object):
             # Reshape image data into the original shape
             image = tf.reshape(image, [299, 299, 3])
 
-            # Creates batches by randomly shuffling tensors
-            self.imgs, self.lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=4,
-                                               min_after_dequeue=10000)
+            if self._mode == 'train':
+                # Creates batches by randomly shuffling tensors
+                self.imgs, self.lbs = tf.train.shuffle_batch([image, label], batch_size=batch_size, capacity=50000, num_threads=4,
+                                                   min_after_dequeue=10000, allow_smaller_final_batch=True)
+            else:
+                self.imgs, self.lbs = tf.train.batch([image, label], batch_size=batch_size, capacity=50000, num_threads=4,
+                                                             min_after_dequeue=10000, allow_smaller_final_batch=True)
 
             self._images = image
             self._labels = label

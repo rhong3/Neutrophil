@@ -219,7 +219,7 @@ def main(trc, tec, to_reload=None, test=None):
 
         print("Start a new training!")
         HE = tfreloader('train', ep, bs, trc, tec)
-        itt = int(trc*ep/bs)
+        itt = int(trc*ep/bs)+1
         if trc <= 2*bs:
             print("Not enough training images!")
         else:

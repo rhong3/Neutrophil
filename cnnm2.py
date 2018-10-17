@@ -247,7 +247,7 @@ class INCEPTION():
                                 print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
                                 print(valid_summary)
 
-                        elif i == max_iter-1 and verbose:  # and i >= 10000:
+                        if i == max_iter-3 and verbose:  # and i >= 10000:
 
                             if cross_validate:
                                 now = datetime.now().isoformat()[11:]
@@ -284,7 +284,7 @@ class INCEPTION():
                         sessa.close()
 
                         print("final avg cost (@ step {} = epoch {}): {}".format(
-                            i, i / nums * self.batch_size, err_train / i), flush=True)
+                            i, int(i / nums * self.batch_size)+1, err_train / i), flush=True)
 
                         now = datetime.now().isoformat()[11:]
                         print("------- Training end: {} -------\n".format(now), flush=True)
@@ -302,12 +302,11 @@ class INCEPTION():
                         except(AttributeError):  # not logging
                             print('Not logging', flush=True)
 
-                        sys.exit(0)
 
         except(KeyboardInterrupt):
 
             print("final avg cost (@ step {} = epoch {}): {}".format(
-                i, i/nums*self.batch_size, err_train / i), flush=True)
+                i, int(i / nums * self.batch_size)+1, err_train / i), flush=True)
 
             now = datetime.now().isoformat()[11:]
             print("------- Training end: {} -------\n".format(now), flush=True)
