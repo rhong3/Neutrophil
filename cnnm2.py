@@ -284,7 +284,7 @@ class INCEPTION():
                         sessa.close()
 
                         print("final avg cost (@ step {} = epoch {}): {}".format(
-                            i, int(i / nums * self.batch_size)+1, err_train / i), flush=True)
+                            i, np.around(i / nums * self.batch_size), err_train / i), flush=True)
 
                         now = datetime.now().isoformat()[11:]
                         print("------- Training end: {} -------\n".format(now), flush=True)
@@ -305,7 +305,7 @@ class INCEPTION():
         except(KeyboardInterrupt):
 
             print("final avg cost (@ step {} = epoch {}): {}".format(
-                i, int(i / nums * self.batch_size)+1, err_train / i), flush=True)
+                i, np.around(i / nums * self.batch_size), err_train / i), flush=True)
 
             now = datetime.now().isoformat()[11:]
             print("------- Training end: {} -------\n".format(now), flush=True)
