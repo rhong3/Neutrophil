@@ -116,8 +116,13 @@ class INCEPTION():
                 y_in, logits, nett, ww, pred, pred_cost,
                 global_step, train_op, merged_summary)
 
-    def inference(self, X, train_status=False):
+    def inference(self, X, dirr, train_status=False):
+        now = datetime.now().isoformat()[11:]
+        print("------- Testing begin: {} -------\n".format(now), flush=True)
         x_list, y_list, tnum = X.test.next_batch(self.batch_size)
+        rd = 1
+        pdx = np.empty([2, 2])
+        yl = []
         with tf.Session() as sessa:
             # Initialize all global and local variables
             init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
@@ -125,13 +130,36 @@ class INCEPTION():
             # Create a coordinator and run all QueueRunner objects
             coord = tf.train.Coordinator()
             threads = tf.train.start_queue_runners(coord=coord, sess=sessa)
-            x, y = sessa.run([x_list, y_list])
-            x = x.astype(np.uint8)
-            feed_dict = {self.x_in: x, self.is_train: train_status}
-            fetches = [self.pred, self.net, self.w]
 
-        return self.sesh.run(fetches, feed_dict=feed_dict)
+            while True:
+                try:
+                    x, y = sessa.run([x_list, y_list])
+                    x = x.astype(np.uint8)
 
+                    feed_dict = {self.x_in: x, self.is_train: train_status}
+                    fetches = [self.pred, self.net, self.w]
+
+                    pred, net, w = self.sesh.run(fetches, feed_dict)
+                    ac.CAM(net, w, pred, x, y, dirr, 'Test', rd)
+                    if rd == 1:
+                        pdx = pred
+                        yl = y
+                    else:
+                        pdx = np.concatenate((pdx, pred), axis=0)
+                        yl.extend(y)
+
+                    rd += 1
+
+                except tf.errors.OutOfRangeError:
+                    # # Stop the threads
+                    # coord.request_stop()
+                    #
+                    # # Wait for threads to stop
+                    # coord.join(threads)
+                    ac.metrics(pdx, yl, dirr, 'Test')
+                    sessa.close()
+                    now = datetime.now().isoformat()[11:]
+                    print("------- Testing end: {} -------\n".format(now), flush=True)
 
     def get_global_step(self, X):
         x_list, y_list, _ = X.train.next_batch(self.batch_size)
@@ -146,7 +174,7 @@ class INCEPTION():
             x = x.astype(np.uint8)
 
             # Stop the threads
-            coord.request_stop()
+            # coord.request_stop()
 
             # Wait for threads to stop
             # coord.join(threads)
@@ -161,8 +189,7 @@ class INCEPTION():
 
         return i
 
-
-    def train(self, X, max_iter=np.inf, max_epochs=np.inf, cross_validate=True,
+    def train(self, X, dirr, max_iter=np.inf, max_epochs=np.inf, cross_validate=True,
               verbose=True, save=True, outdir="./out"):
 
         if save:
@@ -208,23 +235,8 @@ class INCEPTION():
                         if i % 1000 == 0 and verbose:  # and i >= 10000:
 
                             if cross_validate:
-                                xv_list, yv_list, _ = X.validation.next_batch(self.batch_size)
-                                with tf.Session() as sess:
-                                    # Initialize all global and local variables
-                                    init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-                                    sess.run(init_op)
-                                    # Create a coordinator and run all QueueRunner objects
-                                    vcoord = tf.train.Coordinator()
-                                    vthreads = tf.train.start_queue_runners(coord=vcoord)
-                                    xv, yv = sess.run([xv_list, yv_list])
-                                    xv = xv.astype(np.uint8)
-
-                                    # Stop the threads
-                                    # vcoord.request_stop()
-
-                                    # Wait for threads to stop
-                                    # vcoord.join(vthreads)
-                                    sess.close()
+                                xv, yv = sessa.run([x_list, y_list])
+                                xv = xv.astype(np.uint8)
 
                                 feed_dict = {self.x_in: xv, self.y_in: yv}
                                 fetches = [self.pred_cost, self.merged_summary]
@@ -235,34 +247,26 @@ class INCEPTION():
                                 print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
                                 print(valid_summary)
 
-                        elif i == max_iter and verbose:  # and i >= 10000:
+                        elif i == max_iter-1 and verbose:  # and i >= 10000:
 
                             if cross_validate:
-                                xv_list, yv_list, _ = X.validation.next_batch(self.batch_size)
-                                with tf.Session() as sess:
-                                    # Initialize all global and local variables
-                                    init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-                                    sess.run(init_op)
-                                    # Create a coordinator and run all QueueRunner objects
-                                    vcoord = tf.train.Coordinator()
-                                    vthreads = tf.train.start_queue_runners(coord=vcoord)
-                                    xv, yv = sess.run([xv_list, yv_list])
-                                    xv = xv.astype(np.uint8)
+                                now = datetime.now().isoformat()[11:]
+                                print("------- Validation begin: {} -------\n".format(now), flush=True)
+                                xv, yv = sessa.run([x_list, y_list])
+                                xv = xv.astype(np.uint8)
 
-                                    # Stop the threads
-                                    # vcoord.request_stop()
-
-                                    # Wait for threads to stop
-                                    # vcoord.join(vthreads)
-                                    sess.close()
                                 feed_dict = {self.x_in: xv, self.y_in: yv}
-                                fetches = [self.pred_cost, self.merged_summary]
-                                valid_cost, valid_summary = self.sesh.run(fetches, feed_dict)
+                                fetches = [self.pred_cost, self.merged_summary, self.pred, self.net, self.w]
+                                valid_cost, valid_summary, pred, net, w = self.sesh.run(fetches, feed_dict)
 
                                 self.valid_logger.add_summary(valid_summary, i)
 
-                                print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
+                                print("round {} --> Last CV cost: ".format(i), valid_cost, flush=True)
                                 print(valid_summary)
+                                ac.CAM(net, w, pred, x, y, dirr, 'Validation')
+                                ac.metrics(pred, yv, dirr, 'Validation')
+                                now = datetime.now().isoformat()[11:]
+                                print("------- Validation end: {} -------\n".format(now), flush=True)
 
 
                         # if i%50000 == 0 and save:
@@ -271,39 +275,12 @@ class INCEPTION():
                         #     saver.save(self.sesh, interfile, global_step=self.step)
 
 
-                        if i >= max_iter or i >= nums*max_epochs/self.batch_size:
-                            # Stop the threads
-                            coord.request_stop()
-
-                            # Wait for threads to stop
-                            coord.join(threads)
-                            sessa.close()
-
-                            print("final avg cost (@ step {} = epoch {}): {}".format(
-                                i, i/nums*self.batch_size, err_train / i), flush=True)
-
-                            now = datetime.now().isoformat()[11:]
-                            print("------- Training end: {} -------\n".format(now), flush=True)
-
-                            if save:
-                                outfile = os.path.join(os.path.abspath(outdir), "inception3_{}".format("_".join(['dropout', str(self.dropout)])))
-                                saver.save(self.sesh, outfile, global_step=None)
-                            try:
-                                self.train_logger.flush()
-                                self.train_logger.close()
-                                self.valid_logger.flush()
-                                self.valid_logger.close()
-
-                            except(AttributeError):  # not logging
-                                continue
-                            break
-
                     except tf.errors.OutOfRangeError:
-                        # Stop the threads
-                        coord.request_stop()
-
-                        # Wait for threads to stop
-                        coord.join(threads)
+                        # # Stop the threads
+                        # coord.request_stop()
+                        #
+                        # # Wait for threads to stop
+                        # coord.join(threads)
                         sessa.close()
 
                         print("final avg cost (@ step {} = epoch {}): {}".format(
@@ -321,8 +298,6 @@ class INCEPTION():
                             self.train_logger.close()
                             self.valid_logger.flush()
                             self.valid_logger.close()
-
-
 
                         except(AttributeError):  # not logging
                             print('Not logging', flush=True)

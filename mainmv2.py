@@ -55,10 +55,8 @@ def counters(totlist_dir):
     telist = pd.read_csv(totlist_dir + '/te_sample.csv', header=0)
     trcc = len(trlist['label']) - 1
     tecc = len(telist['label']) - 1
-    trnumm = int(trcc/5000)+1
-    tenumm = int(tecc/5000)+1
 
-    return trcc, tecc, trnumm, tenumm
+    return trcc, tecc
 
 
 def load_image(addr):
@@ -122,9 +120,8 @@ def loader(totlist_dir):
     sys.stdout.flush()
 
 
-def tfreloader(mode, ep, bs):
+def tfreloader(mode, ep, bs, ctr, cte):
     filename = data_dir + '/' + mode + '.tfrecords'
-    ctr, cte, _, _ = counters(img_dir)
     if mode == 'train':
         ct = ctr
     else:
@@ -136,12 +133,12 @@ def tfreloader(mode, ep, bs):
     datasets.train = TF_data_input.DataSet(mode, filename, ep, bs, ct)
     datasets.validation = TF_data_input.DataSet(mode, filename, ep, bs, ct)
 
-    return datasets, ct
+    return datasets
 
 
 
 
-def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, test=None, log_dir=None):
+def main(trc, tec, to_reload=None, test=None):
 
     if test:  # restore
 
@@ -161,55 +158,14 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
             m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
 
         print("Loaded! Ready for test!", flush=True)
-
-        HET = tfreloader('test', ep, bs)
-
-        for a in range(tenum):
-
-            aa = str(a+1)
-
-            tdat_f = data_dir + '/data_test_{}.txt'.format(aa)
-
-            tlab_f = data_dir + '/lab_test_{}.txt'.format(aa)
-
-            HET = load_HE_data(train_dat_name=tdat_f,
-                               train_lab_name=tlab_f,
-                               valid_dat_name=tdat_f,
-                               valid_lab_name=tlab_f)
-
-            ppp = int(5000 / 1024)
-
-            if tec > 5000:
-
-                for b in range(ppp):
-
-                    bb = str(b+1)
-
-                    x, y = HET.validation.next_batch(1024)
-                    print('Test:')
-                    te, tenet, tew = m.inference(x)
-                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
-                    metrics(te, y, dirr, 'Test_{}'.format(bb))
-
-                tec = tec-5000
-
-
-            elif tec in range(1024, 5001):
-                mppp = int(tec/1024)
-
-                for b in range(mppp):
-
-                    bb = str(b+1+a*5)
-
-                    x, y = HET.validation.next_batch(1024)
-                    print('Test:')
-                    te, tenet, tew = m.inference(x)
-                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
-                    metrics(te, y, dirr, 'Test_{}'.format(bb))
-
-            else:
-                print("Not enough for a test batch!")
-
+        if tec >= 1000:
+            HE = tfreloader('test', 1, 1000, trc, tec)
+            m.inference(HE, dirr)
+        elif 100 < tec < 1000:
+            HE = tfreloader('test', 1, tec, trc, tec)
+            m.inference(HE, dirr)
+        else:
+            print("Not enough testing images!")
 
     elif to_reload:
 
@@ -229,102 +185,20 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
             m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
 
         print("Loaded! Restart training.", flush=True)
-
-        for a in range(trnum):
-
-            aa = str(a + 1)
-
-            dat_f = data_dir + '/data_{}.txt'.format(aa)
-
-            lab_f = data_dir + '/lab_{}.txt'.format(aa)
-
-
-            HE, sz = load_HE_data(train_dat_name=dat_f,
-                              train_lab_name=lab_f,
-                              valid_dat_name=dat_f,
-                              valid_lab_name=lab_f)
-
-            old_ITER = m.get_global_step(HE)[0]
-
-            if sz < 4998:
-                reITER = int(sz * reITER/5000)
-                MAX_ITER = old_ITER + reITER
-
-            else:
-                MAX_ITER = old_ITER + reITER
-
-            if a == trnum-1:
-                m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
-                        verbose=True, save=True, outdir=METAGRAPH_DIR)
-            else:
-                m.train(HE, max_iter=MAX_ITER, max_epochs=MAX_EPOCHS,
-                        verbose=True, save=False, outdir=METAGRAPH_DIR)
-
-            if trc > 1026:
-                x, y = HE.validation.next_batch(1024)
-                print('Generating metrics')
-                tr, trnet, trw = m.inference(x)
-                CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
-                metrics(tr, y, dirr, 'Train_{}'.format(aa))
-            elif trc in range(50, 1026):
-                x, y = HE.validation.next_batch(trc)
-                print('Generating metrics')
-                tr, trnet, trw = m.inference(x)
-                CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
-                metrics(tr, y, dirr, 'Train_{}'.format(aa))
-            else:
-                print("The last training set is too small! No metrics generated.")
-
-            trc -= 5000
-
-
-
-        for at in range(tenum):
-
-            aat = str(at+1)
-
-            tdat_f = data_dir + '/data_test_{}.txt'.format(aat)
-
-            tlab_f = data_dir + '/lab_test_{}.txt'.format(aat)
-
-            HET, _ = load_HE_data(train_dat_name=tdat_f,
-                               train_lab_name=tlab_f,
-                               valid_dat_name=tdat_f,
-                               valid_lab_name=tlab_f)
-
-            ppp = int(5000 / 1024)
-
-            if tec > 5000:
-
-                for b in range(ppp):
-
-                    bb = str(b+1)
-
-                    x, y = HET.validation.next_batch(1024)
-                    print('Test:')
-                    te, tenet, tew = m.inference(x)
-                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
-                    metrics(te, y, dirr, 'Test_{}'.format(bb))
-
-                tec = tec-5000
-
-
-            elif tec in range(1024, 5001):
-                mppp = int(tec/1024)
-
-                for b in range(mppp):
-
-                    bb = str(b+1+at*5)
-
-                    x, y = HET.validation.next_batch(1024)
-                    print('Test:')
-                    te, tenet, tew = m.inference(x)
-                    CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
-                    metrics(te, y, dirr, 'Test_{}'.format(bb))
-
-            else:
-                print("Not enough for a test batch!")
-
+        HE = tfreloader('train', ep, bs, trc, tec)
+        itt = int(trc * ep / bs)
+        if trc <= 2 * bs:
+            print("Not enough training images!")
+        else:
+            m.train(HE, dirr=dirr, max_iter=itt, max_epochs=MAX_EPOCHS, verbose=True, save=True, outdir=METAGRAPH_DIR)
+        if tec >= 1000:
+            HE = tfreloader('test', 1, 1000, trc, tec)
+            m.inference(HE, dirr)
+        elif 100 < tec < 1000:
+            HE = tfreloader('test', 1, tec, trc, tec)
+            m.inference(HE, dirr)
+        else:
+            print("Not enough testing images!")
 
     else:  # train
 
@@ -343,73 +217,21 @@ def main(tenum, trnum, trc, tec, reITER=None, old_ITER=None, to_reload=None, tes
         else:
             m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, log_dir=LOG_DIR)
 
-        print("Start training!")
-
-        HE, ctt = tfreloader('train', ep, bs)
-        itt = int(ctt*ep/bs)
-
-        m.train(HE, max_iter=itt, max_epochs=MAX_EPOCHS, verbose=True, save=True, outdir=METAGRAPH_DIR)
-
-        #     if trc > 1026:
-        #         x, y = HE.validation.next_batch(1024)
-        #         print('Generating metrics')
-        #         tr, trnet, trw = m.inference(x)
-        #         CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
-        #         metrics(tr, y, dirr, 'Train_{}'.format(aa))
-        #     elif trc in range(50, 1026):
-        #         x, y = HE.validation.next_batch(trc)
-        #         print('Generating metrics')
-        #         tr, trnet, trw = m.inference(x)
-        #         CAM(trnet, trw, tr, x, y, dirr, 'Train_{}'.format(aa))
-        #         metrics(tr, y, dirr, 'Train_{}'.format(aa))
-        #     else:
-        #         print("The last training set is too small! No metrics generated.")
-        #
-        #     trc -= 5000
-        #
-        # for at in range(tenum):
-        #
-        #     aat = str(at + 1)
-        #
-        #     tdat_f = data_dir + '/data_test_{}.txt'.format(aat)
-        #
-        #     tlab_f = data_dir + '/lab_test_{}.txt'.format(aat)
-        #
-        #     HET, _ = load_HE_data(train_dat_name=tdat_f,
-        #                        train_lab_name=tlab_f,
-        #                        valid_dat_name=tdat_f,
-        #                        valid_lab_name=tlab_f)
-        #
-        #     ppp = int(5000 / 1024)
-        #
-        #     if tec > 5000:
-        #
-        #         for b in range(ppp):
-        #             bb = str(b + 1)
-        #
-        #             x, y = HET.validation.next_batch(1024)
-        #             print('Test:')
-        #             te, tenet, tew = m.inference(x)
-        #             CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
-        #             metrics(te, y, dirr, 'Test_{}'.format(bb))
-        #
-        #         tec = tec - 5000
-        #
-        #
-        #     elif tec in range(1024, 5001):
-        #         mppp = int(tec / 1024)
-        #
-        #         for b in range(mppp):
-        #             bb = str(b + 1 + at * 5)
-        #
-        #             x, y = HET.validation.next_batch(1024)
-        #             print('Test:')
-        #             te, tenet, tew = m.inference(x)
-        #             CAM(tenet, tew, te, x, y, dirr, 'Test_{}'.format(bb))
-        #             metrics(te, y, dirr, 'Test_{}'.format(bb))
-        #
-        #     else:
-        #         print("Not enough for a test batch!")
+        print("Start a new training!")
+        HE = tfreloader('train', ep, bs, trc, tec)
+        itt = int(trc*ep/bs)
+        if trc <= 2*bs:
+            print("Not enough training images!")
+        else:
+            m.train(HE, dirr=dirr, max_iter=itt, max_epochs=MAX_EPOCHS, verbose=True, save=True, outdir=METAGRAPH_DIR)
+        if tec >= 1000:
+            HE = tfreloader('test', 1, 1000, trc, tec)
+            m.inference(HE, dirr)
+        elif 100 < tec < 1000:
+            HE = tfreloader('test', 1, tec, trc, tec)
+            m.inference(HE, dirr)
+        else:
+            print("Not enough testing images!")
 
 
 if __name__ == "__main__":
@@ -424,18 +246,18 @@ if __name__ == "__main__":
     _, _, _, tes, trs = Sample_prep.samplesum()
     tes.to_csv(img_dir+'/te_sample.csv', index=False)
     trs.to_csv(img_dir+'/tr_sample.csv', index=False)
-    trc, tec, trnum, tenum = counters(img_dir)
+    trc, tec = counters(img_dir)
 
     try:
         modeltoload = sys.argv[5]
         try:
             testmode = sys.argv[6]
-            main(tenum, trnum, trc, tec, to_reload=modeltoload, log_dir=LOG_DIR, test=True)
+            main(trc, tec, to_reload=modeltoload, test=True)
         except(IndexError):
-            main(tenum, trnum, trc, tec, reITER=iter, to_reload=modeltoload, log_dir=LOG_DIR)
+            main(trc, tec, to_reload=modeltoload)
     except(IndexError):
-        if not os.path.isfile(data_dir + '/train.tfrecords'.format(str(tenum))):
+        if not os.path.isfile(data_dir + '/test.tfrecords'):
             loader(img_dir)
-        main(tenum, trnum, trc, tec, reITER=iter, old_ITER=0)
+        main(trc, tec)
 
 

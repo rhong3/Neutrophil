@@ -88,9 +88,10 @@ def py_map2jpg(imgmap, rang, colorMap):
     return cv2.applyColorMap(heatmap_x, cv2.COLORMAP_JET)
 
 
-def CAM(net, w, pred, x, y, path, name):
+def CAM(net, w, pred, x, y, path, name, rd=1):
     DIR = "../Neutrophil/{}/out/{}_posimg".format(path, name)
     DIRR = "../Neutrophil/{}/out/{}_negimg".format(path, name)
+    rd = str(rd)
 
     try:
         os.mkdir(DIR)
@@ -144,10 +145,10 @@ def CAM(net, w, pred, x, y, path, name):
                 curHeatMap = a * 0.6 + b * 0.4
                 ab = np.hstack((a,b))
                 full = np.hstack((curHeatMap, ab))
-                # imname = DIRR + '/' + ddt + str(ij) + '.png'
-                # imname1 = DIRR + '/' + ddt + str(ij) + '_img.png'
-                # imname2 = DIRR+ '/' + ddt + str(ij) + '_hm.png'
-                imname3 = DIRR + '/' + ddt + str(ij) + '_full.png'
+                # imname = DIRR + '/' + rd + ddt + str(ij) + '.png'
+                # imname1 = DIRR + '/' + rd + ddt + str(ij) + '_img.png'
+                # imname2 = DIRR+ '/' + rd + ddt + str(ij) + '_hm.png'
+                imname3 = DIRR + '/' + rd + ddt + str(ij) + '_full.png'
                 # cv2.imwrite(imname, curHeatMap)
                 # cv2.imwrite(imname1, a)
                 # cv2.imwrite(imname2, b)
@@ -190,10 +191,10 @@ def CAM(net, w, pred, x, y, path, name):
                 curHeatMap = a * 0.6 + b * 0.4
                 ab = np.hstack((a,b))
                 full = np.hstack((curHeatMap, ab))
-                # imname = DIR + '/' + ddt + str(ij) + '.png'
-                # imname1 = DIR + '/' + ddt + str(ij) + '_img.png'
-                # imname2 = DIR + '/' + ddt + str(ij) + '_hm.png'
-                imname3 = DIR + '/' + ddt + str(ij) + '_full.png'
+                # imname = DIR + '/' + rd + ddt + str(ij) + '.png'
+                # imname1 = DIR + '/' + rd + ddt + str(ij) + '_img.png'
+                # imname2 = DIR + '/' + rd + ddt + str(ij) + '_hm.png'
+                imname3 = DIR + '/' + rd + ddt + str(ij) + '_full.png'
                 # cv2.imwrite(imname, curHeatMap)
                 # cv2.imwrite(imname1, a)
                 # cv2.imwrite(imname2, b)
