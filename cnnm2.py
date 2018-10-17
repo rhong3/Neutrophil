@@ -160,6 +160,7 @@ class INCEPTION():
                     sessa.close()
                     now = datetime.now().isoformat()[11:]
                     print("------- Testing end: {} -------\n".format(now), flush=True)
+                    break
 
     def get_global_step(self, X):
         x_list, y_list, _ = X.train.next_batch(self.batch_size)
