@@ -71,7 +71,7 @@ class INCEPTION():
         return self.global_step.eval(session=self.sesh)
 
     def _buildGraph(self):
-        x_in = tf.placeholder(tf.float32, shape=self.input_dim, name="x")
+        x_in = tf.placeholder(tf.float32, name="x")
         x_in_reshape = tf.reshape(x_in, [-1, self.input_dim[1], self.input_dim[2], 3])
 
         dropout = tf.placeholder_with_default(1., shape=[], name="dropout")
@@ -302,7 +302,6 @@ class INCEPTION():
                         except(AttributeError):  # not logging
                             print('Not logging', flush=True)
 
-
         except(KeyboardInterrupt):
 
             print("final avg cost (@ step {} = epoch {}): {}".format(
@@ -319,8 +318,6 @@ class INCEPTION():
                 self.train_logger.close()
                 self.valid_logger.flush()
                 self.valid_logger.close()
-
-
 
             except(AttributeError):  # not logging
                 print('Not logging', flush=True)
