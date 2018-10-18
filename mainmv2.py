@@ -109,7 +109,7 @@ def loader(totlist_dir):
         label = telblist[i]
         # Create a feature
         feature = {'test/label': _int64_feature(label),
-                   'tset/image': _bytes_feature(tf.compat.as_bytes(img.tostring()))}
+                   'test/image': _bytes_feature(tf.compat.as_bytes(img.tostring()))}
         # Create an example protocol buffer
         example = tf.train.Example(features=tf.train.Features(feature=feature))
 
@@ -126,12 +126,8 @@ def tfreloader(mode, ep, bs, ctr, cte):
         ct = ctr
     else:
         ct = cte
-    class DataSets(object):
-        pass
 
-    datasets = DataSets()
-    datasets.train = TF_data_input.DataSet(mode, filename, ep, bs, ct)
-    datasets.validation = TF_data_input.DataSet(mode, filename, ep, bs, ct)
+    datasets = TF_data_input.DataSet(mode, filename, ep, bs, ct)
 
     return datasets
 

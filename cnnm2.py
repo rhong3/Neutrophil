@@ -116,37 +116,43 @@ class INCEPTION():
                 y_in, logits, nett, ww, pred, pred_cost,
                 global_step, train_op, merged_summary)
 
-    def inference(self, X, dirr, train_status=False):
+    def inference(self, X, dirr, train_status=False, Not_Realtest=True):
         now = datetime.now().isoformat()[11:]
         print("------- Testing begin: {} -------\n".format(now), flush=True)
-        x_list, y_list, tnum = X.test.next_batch(self.batch_size)
+        x_list, y_list, tnum = X.next_batch()
         rd = 1
-        pdx = np.empty([2, 2])
+        pdx = []
         yl = []
-        with tf.Session() as sessa:
+        with tf.Session() as sessb:
             # Initialize all global and local variables
             init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-            sessa.run(init_op)
+            sessb.run(init_op)
             # Create a coordinator and run all QueueRunner objects
             coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord, sess=sessa)
+            threads = tf.train.start_queue_runners(coord=coord, sess=sessb)
 
             while True:
                 try:
-                    x, y = sessa.run([x_list, y_list])
+                    if Not_Realtest:
+                        x, y = sessb.run([x_list, y_list])
+                    else:
+                        x = sessb.run([x_list])
+                        y = None
                     x = x.astype(np.uint8)
-
                     feed_dict = {self.x_in: x, self.is_train: train_status}
                     fetches = [self.pred, self.net, self.w]
-
                     pred, net, w = self.sesh.run(fetches, feed_dict)
-                    ac.CAM(net, w, pred, x, y, dirr, 'Test', rd)
+                    if Not_Realtest:
+                        ac.CAM(net, w, pred, x, y, dirr, 'Test', rd)
+                    else:
+                        ac.CAM_R(net, w, pred, x, dirr, 'Test', rd)
+
                     if rd == 1:
                         pdx = pred
                         yl = y
                     else:
                         pdx = np.concatenate((pdx, pred), axis=0)
-                        yl.extend(y)
+                        yl = np.concatenate((yl,y), axis=None)
 
                     rd += 1
 
@@ -156,14 +162,17 @@ class INCEPTION():
                     #
                     # # Wait for threads to stop
                     # coord.join(threads)
-                    ac.metrics(pdx, yl, dirr, 'Test')
-                    sessa.close()
+                    if Not_Realtest:
+                        ac.metrics(pdx, yl, dirr, 'Test')
+                    else:
+                        ac.realout(pdx, dirr, 'Test')
+                    sessb.close()
                     now = datetime.now().isoformat()[11:]
                     print("------- Testing end: {} -------\n".format(now), flush=True)
                     break
 
     def get_global_step(self, X):
-        x_list, y_list, _ = X.train.next_batch(self.batch_size)
+        x_list, y_list, _ = X.next_batch()
         with tf.Session() as sess:
             # Initialize all global and local variables
             init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
@@ -201,7 +210,7 @@ class INCEPTION():
             now = datetime.now().isoformat()[11:]
             print("------- Training begin: {} -------\n".format(now), flush=True)
 
-            x_list, y_list, nums = X.train.next_batch(self.batch_size)
+            x_list, y_list, nums = X.next_batch()
             with tf.Session() as sessa:
                 # Initialize all global and local variables
                 init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
@@ -246,7 +255,6 @@ class INCEPTION():
                                 self.valid_logger.add_summary(valid_summary, i)
 
                                 print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
-                                print(valid_summary)
 
                         if i == max_iter-3 and verbose:  # and i >= 10000:
 
@@ -263,7 +271,6 @@ class INCEPTION():
                                 self.valid_logger.add_summary(valid_summary, i)
 
                                 print("round {} --> Last CV cost: ".format(i), valid_cost, flush=True)
-                                print(valid_summary)
                                 ac.CAM(net, w, pred, x, y, dirr, 'Validation')
                                 ac.metrics(pred, yv, dirr, 'Validation')
                                 now = datetime.now().isoformat()[11:]

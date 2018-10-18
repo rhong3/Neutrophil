@@ -8,6 +8,19 @@ import pandas as pd
 import cv2
 
 
+def realout(pdx, path, name):
+    pdx = np.asmatrix(pdx)
+    prl = (pdx[:, 1] > 0.5).astype('uint8')
+    prl = pd.DataFrame(prl, columns=['Prediction'])
+    out = pd.DataFrame(pdx, columns=['neg_score', 'pos_score'])
+    out = pd.concat([out, prl], axis=1)
+    out.columns[0] = 'Num'
+    out.columns[0] = 'Group'
+    out['Num'] = out.index
+    out['Group'] = int(out.index/1000)
+    out.to_csv("../Neutrophil/{}/out/{}.csv".format(path, name), index=False)
+
+
 def metrics(pdx, tl, path, name):
     pdx = np.asmatrix(pdx)
     prl = (pdx[:,1] > 0.5).astype('uint8')
@@ -25,39 +38,42 @@ def metrics(pdx, tl, path, name):
     accur = round(accur,2)
     print('Accuracy:')
     print(accur)
-
     y_score = pdx[:,1]
-    auc = skl.metrics.roc_auc_score(tl, y_score)
-    print('ROC-AUC:')
-    print(skl.metrics.roc_auc_score(tl, y_score))
-    fpr, tpr, _ = skl.metrics.roc_curve(tl, y_score)
-    plt.figure()
-    lw = 2
-    plt.plot(fpr, tpr, color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('ROC of {}'.format(name))
-    plt.legend(loc="lower right")
-    plt.savefig("../Neutrophil/{}/out/{}_ROC.png".format(path, name))
+    try:
+        auc = skl.metrics.roc_auc_score(tl, y_score)
+        auc = round(auc,2)
+        print('ROC-AUC:')
+        print(auc)
+        fpr, tpr, _ = skl.metrics.roc_curve(tl, y_score)
+        plt.figure()
+        lw = 2
+        plt.plot(fpr, tpr, color='darkorange',
+                 lw=lw, label='ROC curve (area = %0.2f)' % auc)
+        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('ROC of {}'.format(name))
+        plt.legend(loc="lower right")
+        plt.savefig("../Neutrophil/{}/out/{}_ROC.png".format(path, name))
 
-    average_precision = skl.metrics.average_precision_score(tl, y_score)
-    print('Average precision-recall score: {0:0.2f}'.format(average_precision))
-    plt.figure()
-    precision, recall, _ = skl.metrics.precision_recall_curve(tl, y_score)
-    plt.step(recall, precision, color='b', alpha=0.2,
-             where='post')
-    plt.fill_between(recall, precision, step='post', alpha=0.2,
-                     color='b')
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
-    plt.title('{} Precision-Recall curve: AP={:0.2f}; Accu={}'.format(name, average_precision, accur))
-    plt.savefig("../Neutrophil/{}/out/{}_PRC.png".format(path, name))
+        average_precision = skl.metrics.average_precision_score(tl, y_score)
+        print('Average precision-recall score: {0:0.2f}'.format(average_precision))
+        plt.figure()
+        precision, recall, _ = skl.metrics.precision_recall_curve(tl, y_score)
+        plt.step(recall, precision, color='b', alpha=0.2,
+                 where='post')
+        plt.fill_between(recall, precision, step='post', alpha=0.2,
+                         color='b')
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.ylim([0.0, 1.05])
+        plt.xlim([0.0, 1.0])
+        plt.title('{} Precision-Recall curve: AP={:0.2f}; Accu={}'.format(name, average_precision, accur))
+        plt.savefig("../Neutrophil/{}/out/{}_PRC.png".format(path, name))
+    except(ValueError):
+        print('Not able to generate plots based on this test set!')
 
 
 def py_returnCAMmap(activation, weights_LR):
@@ -199,3 +215,58 @@ def CAM(net, w, pred, x, y, path, name, rd=1):
                 # cv2.imwrite(imname1, a)
                 # cv2.imwrite(imname2, b)
                 cv2.imwrite(imname3, full)
+
+
+def CAM_R(net, w, pred, x, path, name, rd=1):
+    DIRR = "../Neutrophil/{}/out/{}_img".format(path, name)
+    rd = str(rd)
+
+    try:
+        os.mkdir(DIRR)
+    except(FileExistsError):
+        pass
+
+    pdx = np.asmatrix(pred)
+
+    prl = (pdx[:,1] > 0.5).astype('uint8')
+
+    for ij in range(len(prl)):
+
+        weights_LR = w
+        activation_lastconv = np.array([net[ij]])
+        weights_LR = weights_LR.T
+        activation_lastconv = activation_lastconv.T
+
+        topNum = 1  # generate heatmap for top X prediction results
+        scores = pred[ij]
+        scoresMean = np.mean(scores, axis=0)
+        ascending_order = np.argsort(scoresMean)
+        IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
+        curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[0], :])
+        for kk in range(topNum):
+            curCAMmap_crops = curCAMmapAll[:, :, kk]
+            curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
+            curHeatMap = cv2.resize(im2double(curCAMmapLarge_crops), (299, 299))  # this line is not doing much
+            curHeatMap = im2double(curHeatMap)
+            curHeatMap = py_map2jpg(curHeatMap, None, 'jet')
+            xim = x[ij].reshape(-1, 3)
+            xim1 = xim[:, 0].reshape(-1, 299)
+            xim2 = xim[:, 1].reshape(-1, 299)
+            xim3 = xim[:, 2].reshape(-1, 299)
+            image = np.empty([299,299,3])
+            image[:, :, 0] = xim1
+            image[:, :, 1] = xim2
+            image[:, :, 2] = xim3
+            a = im2double(image) * 255
+            b = im2double(curHeatMap) * 255
+            curHeatMap = a * 0.6 + b * 0.4
+            ab = np.hstack((a,b))
+            full = np.hstack((curHeatMap, ab))
+            # imname = DIRR + '/' + rd + '/' + str(ij) + '.png'
+            # imname1 = DIRR + '/' + rd + '/' + str(ij) + '_img.png'
+            # imname2 = DIRR+ '/' + rd + '/' + str(ij) + '_hm.png'
+            imname3 = DIRR + '/' + rd + '/' + str(ij) + '_' + str(prl[ij]) + '_full.png'
+            # cv2.imwrite(imname, curHeatMap)
+            # cv2.imwrite(imname1, a)
+            # cv2.imwrite(imname2, b)
+            cv2.imwrite(imname3, full)

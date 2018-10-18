@@ -5,14 +5,15 @@ Created on 10/12/2018
 @author: RH
 """
 
-import get_tile
+import get_tilev2
 import time
 import matplotlib
 matplotlib.use('Agg')
 import os
 import sys
 import numpy as np
-import HE_data_input_te
+import tensorflow as tf
+import TF_data_input
 import cnnm2
 import cnng2
 import cnni2
@@ -31,8 +32,7 @@ bs = int(bs)
 
 IMG_DIM = 299
 
-INPUT_DIM = [IMG_DIM ** 2 * 3,
-             IMG_DIM, IMG_DIM]
+INPUT_DIM = [bs, IMG_DIM, IMG_DIM, 3]
 
 HYPERPARAMS = {
     "batch_size": bs,
@@ -70,176 +70,51 @@ try:
 except(FileExistsError):
     pass
 
-
-def iter_loadtxt(filename, delimiter=',', skiprows=0, dtype=float):
-    def iter_func():
-        with open(filename, 'r') as infile:
-            for _ in range(skiprows):
-                next(infile)
-            for line in infile:
-                line = line.rstrip().split(delimiter)
-                for item in line:
-                    yield dtype(item)
-        iter_loadtxt.rowlength = len(line)
-
-    data = np.fromiter(iter_func(), dtype=dtype)
-    data = data.reshape((-1, iter_loadtxt.rowlength))
-    return data
+def load_image(addr):
+    img = cv2.imread(addr)
+    img = img.astype(np.float32)
+    return img
 
 
-def load_HE_data(train_dat_name, valid_dat_name):
-    train_dat = iter_loadtxt(train_dat_name, dtype=int, delimiter='\t')
-    valid_dat = iter_loadtxt(valid_dat_name, dtype=int, delimiter='\t')
-
-    class DataSets(object):
-        pass
-
-    data_sets = DataSets()
-
-    data_sets.train = HE_data_input_te.DataSet(images=train_dat, reshape=False)
-
-    data_sets.validation = HE_data_input_te.DataSet(images=valid_dat, reshape=False)
-    return data_sets
+def _int64_feature(value):
+  return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+def _bytes_feature(value):
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
-def py_returnCAMmap(activation, weights_LR):
-    n_feat, w, h, n = activation.shape
-    act_vec = np.reshape(activation, [n_feat, w*h])
-    n_top = weights_LR.shape[0]
-    out = np.zeros([w, h, n_top])
+def loader(totlist_dir):
+    telist = pd.read_csv(totlist_dir+'/dict.csv', header=0)
+    teimlist = telist['Loc'].values.tolist()
 
-    for t in range(n_top):
-        weights_vec = np.reshape(weights_LR[t], [1, weights_LR[t].shape[0]])
-        heatmap_vec = np.dot(weights_vec,act_vec)
-        heatmap = np.reshape( np.squeeze(heatmap_vec) , [w, h])
-        out[:,:,t] = heatmap
+    test_filename = data_dir+'/test.tfrecords'
+    writer = tf.python_io.TFRecordWriter(test_filename)
+    for i in range(len(teimlist)):
+        if not i % 1000:
+            sys.stdout.flush()
+        # Load the image
+        img = load_image(teimlist[i])
+        # Create a feature
+        feature = {'test/image': _bytes_feature(tf.compat.as_bytes(img.tostring()))}
+        # Create an example protocol buffer
+        example = tf.train.Example(features=tf.train.Features(feature=feature))
 
-    return out
+        # Serialize to string and write on the file
+        writer.write(example.SerializeToString())
 
-
-def im2double(im):
-    return cv2.normalize(im.astype('float'), None, 0.0, 1.0, cv2.NORM_MINMAX)
-
-
-def py_map2jpg(imgmap, rang, colorMap):
-    if rang is None:
-        rang = [np.min(imgmap), np.max(imgmap)]
-
-    heatmap_x = np.round(imgmap*255).astype(np.uint8)
-
-    return cv2.applyColorMap(heatmap_x, cv2.COLORMAP_JET)
+    writer.close()
+    sys.stdout.flush()
 
 
-def CAM(net, w, pred, x, path, name, prlista, universal):
-    DIR = "../Neutrophil/{}/out/{}_posimg".format(path, name)
-    DIRR = "../Neutrophil/{}/out/{}_negimg".format(path, name)
+def tfreloader(mode, ep, bs, ctr, cte):
+    filename = data_dir + '/' + mode + '.tfrecords'
+    if mode == 'train':
+        ct = ctr
+    else:
+        ct = cte
 
-    try:
-        os.mkdir(DIR)
-    except(FileExistsError):
-        pass
+    datasets = TF_data_input.DataSet(mode, filename, ep, bs, ct)
 
-    try:
-        os.mkdir(DIRR)
-    except(FileExistsError):
-        pass
-
-    pdx = np.asmatrix(pred)
-
-    prl = (pdx[:,1] > 0.5).astype('uint8')
-
-    prlista.extend(prl)
-
-    newprlist = prlista
-
-    for ij in range(len(prl)):
-
-        if prl[ij] == 0:
-
-            weights_LR = w
-            activation_lastconv = np.array([net[ij]])
-            weights_LR = weights_LR.T
-            activation_lastconv = activation_lastconv.T
-
-            topNum = 1  # generate heatmap for top X prediction results
-            scores = pred[ij]
-            scoresMean = np.mean(scores, axis=0)
-            ascending_order = np.argsort(scoresMean)
-            IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[0], :])
-            for kk in range(topNum):
-                curCAMmap_crops = curCAMmapAll[:, :, kk]
-                curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
-                curHeatMap = cv2.resize(im2double(curCAMmapLarge_crops), (299, 299))  # this line is not doing much
-                curHeatMap = im2double(curHeatMap)
-                curHeatMap = py_map2jpg(curHeatMap, None, 'jet')
-                xim = x[ij].reshape(-1, 3)
-                xim1 = xim[:, 0].reshape(-1, 299)
-                xim2 = xim[:, 1].reshape(-1, 299)
-                xim3 = xim[:, 2].reshape(-1, 299)
-                image = np.empty([299,299,3])
-                image[:, :, 0] = xim1
-                image[:, :, 1] = xim2
-                image[:, :, 2] = xim3
-                a = im2double(image) * 255
-                b = im2double(curHeatMap) * 255
-                curHeatMap = a * 0.6 + b * 0.4
-                ab = np.hstack((a,b))
-                full = np.hstack((curHeatMap, ab))
-                # imname = DIRR + '/' + ddt + str(universal) + '.png'
-                # imname1 = DIRR + '/' + ddt + str(universal) + '_img.png'
-                # imname2 = DIRR+ '/' + ddt + str(universal) + '_hm.png'
-                imname3 = DIRR + '/' + str(universal) + '_full.png'
-                # cv2.imwrite(imname, curHeatMap)
-                # cv2.imwrite(imname1, a)
-                # cv2.imwrite(imname2, b)
-                cv2.imwrite(imname3, full)
-
-
-        else:
-
-            weights_LR = w
-            activation_lastconv = np.array([net[ij]])
-            weights_LR = weights_LR.T
-            activation_lastconv = activation_lastconv.T
-
-            topNum = 1  # generate heatmap for top X prediction results
-            scores = pred[ij]
-            scoresMean = np.mean(scores, axis=0)
-            ascending_order = np.argsort(scoresMean)
-            IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[1], :])
-            for kk in range(topNum):
-                curCAMmap_crops = curCAMmapAll[:, :, kk]
-                curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
-                curHeatMap = cv2.resize(im2double(curCAMmapLarge_crops), (299, 299))  # this line is not doing much
-                curHeatMap = im2double(curHeatMap)
-                curHeatMap = py_map2jpg(curHeatMap, None, 'jet')
-                xim = x[ij].reshape(-1, 3)
-                xim1 = xim[:, 0].reshape(-1, 299)
-                xim2 = xim[:, 1].reshape(-1, 299)
-                xim3 = xim[:, 2].reshape(-1, 299)
-                image = np.empty([299,299,3])
-                image[:, :, 0] = xim1
-                image[:, :, 1] = xim2
-                image[:, :, 2] = xim3
-                a = im2double(image) * 255
-                b = im2double(curHeatMap) * 255
-                curHeatMap = a * 0.6 + b * 0.4
-                ab = np.hstack((a,b))
-                full = np.hstack((curHeatMap, ab))
-                # imname = DIR + '/' + ddt + str(universal) + '.png'
-                # imname1 = DIR + '/' + ddt + str(universal) + '_img.png'
-                # imname2 = DIR + '/' + ddt + str(universal) + '_hm.png'
-                imname3 = DIR + '/' + str(universal) + '_full.png'
-                # cv2.imwrite(imname, curHeatMap)
-                # cv2.imwrite(imname1, a)
-                # cv2.imwrite(imname2, b)
-                cv2.imwrite(imname3, full)
-
-        universal +=1
-
-    return newprlist
+    return datasets
 
 
 def test(tenum, tec, to_reload=None):
@@ -311,7 +186,7 @@ def test(tenum, tec, to_reload=None):
 start_time = time.time()
 
 if not os.path.isfile(data_dir+'/dict.csv'):
-    get_tile.tile(image_file=imgfile, outdir = file_DIR)
+    get_tilev2.tile(image_file=imgfile, outdir = file_DIR)
 
 dict = pd.read_csv(data_dir+'/dict.csv', header=0)
 tec = len(dict["Num"])
