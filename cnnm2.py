@@ -120,7 +120,7 @@ class INCEPTION():
         now = datetime.now().isoformat()[11:]
         print("------- Testing begin: {} -------\n".format(now), flush=True)
         x_list, y_list, tnum = X.next_batch()
-        rd = 1
+        rd = 0
         pdx = []
         yl = []
         with tf.Session() as sessb:
@@ -147,12 +147,12 @@ class INCEPTION():
                     else:
                         ac.CAM_R(net, w, pred, x, dirr, 'Test', rd)
 
-                    if rd == 1:
+                    if rd == 0:
                         pdx = pred
                         yl = y
                     else:
                         pdx = np.concatenate((pdx, pred), axis=0)
-                        yl = np.concatenate((yl,y), axis=None)
+                        yl = np.concatenate((yl, y), axis=None)
 
                     rd += 1
 

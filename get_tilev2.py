@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 
-def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026280_2016-10-27 14_13_01.scn", outdir = "../Neutrophil/Outputs/"):
+def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     slide = OpenSlide(path_to_slide+image_file)
 
     assert 'openslide.bounds-height' in slide.properties
@@ -24,20 +24,12 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
     n_x = int((bounds_width - 1) / stepsize)
     n_y = int((bounds_height - 1) / stepsize)
 
-    dat = np.empty((0, int(299 ** 2 * 3)), dtype='uint8')
-
     imloc = []
     counter = 0
     svcounter = 0
 
     if not os.path.exists(outdir):
             os.makedirs(outdir)
-
-    if not os.path.exists(outdir + '/Tiles'):
-            os.makedirs(outdir + '/Tiles')
-
-    if not os.path.exists(outdir + '/data'):
-            os.makedirs(outdir + '/data')
 
     for i in range(n_x - 1):
         for j in range(n_y - 1):
@@ -55,10 +47,9 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
             white = np.sum(mask)/(299*299)
 
             if white < 0.5:
-                the_image.save(outdir + "Tiles/region_x-{}-y-{}.png".format(target_x, target_y))
-                strr = outdir + "Tiles/region_x-{}-y-{}.png".format(target_x, target_y)
-                gp = int((svcounter)/1000)
-                imloc.append([svcounter, counter, target_x, target_y, strr, gp])
+                the_image.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
+                strr = outdir + "/region_x-{}-y-{}.png".format(target_x, target_y)
+                imloc.append([svcounter, counter, target_x, target_y, strr])
                 svcounter += 1
             else:
                 pass
@@ -66,5 +57,5 @@ def tile(path_to_slide = "../Neutrophil/", image_file = "ImageCollection_0000026
 
             counter += 1
 
-    imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y", "Loc", "Group"])
-    imlocpd.to_csv(outdir + "/data/dict.csv", index = False)
+    imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y", "Loc"])
+    imlocpd.to_csv(outdir + "/dict.csv", index = False)

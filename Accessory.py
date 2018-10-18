@@ -15,9 +15,7 @@ def realout(pdx, path, name):
     out = pd.DataFrame(pdx, columns=['neg_score', 'pos_score'])
     out = pd.concat([out, prl], axis=1)
     out.columns[0] = 'Num'
-    out.columns[0] = 'Group'
     out['Num'] = out.index
-    out['Group'] = int(out.index/1000)
     out.to_csv("../Neutrophil/{}/out/{}.csv".format(path, name), index=False)
 
 
@@ -104,10 +102,10 @@ def py_map2jpg(imgmap, rang, colorMap):
     return cv2.applyColorMap(heatmap_x, cv2.COLORMAP_JET)
 
 
-def CAM(net, w, pred, x, y, path, name, rd=1):
+def CAM(net, w, pred, x, y, path, name, rd=0):
     DIR = "../Neutrophil/{}/out/{}_posimg".format(path, name)
     DIRR = "../Neutrophil/{}/out/{}_negimg".format(path, name)
-    rd = str(rd)
+    rd = rd*1000
 
     try:
         os.mkdir(DIR)
@@ -124,7 +122,7 @@ def CAM(net, w, pred, x, y, path, name, rd=1):
     prl = (pdx[:,1] > 0.5).astype('uint8')
 
     for ij in range(len(y)):
-
+        id = str(ij + rd)
         if prl[ij] == 0:
             if y[ij] == 0:
                 ddt = 'Correct'
@@ -161,10 +159,10 @@ def CAM(net, w, pred, x, y, path, name, rd=1):
                 curHeatMap = a * 0.6 + b * 0.4
                 ab = np.hstack((a,b))
                 full = np.hstack((curHeatMap, ab))
-                # imname = DIRR + '/' + rd + ddt + str(ij) + '.png'
-                # imname1 = DIRR + '/' + rd + ddt + str(ij) + '_img.png'
-                # imname2 = DIRR+ '/' + rd + ddt + str(ij) + '_hm.png'
-                imname3 = DIRR + '/' + rd + ddt + str(ij) + '_full.png'
+                # imname = DIR + '/' + id + ddt + '.png'
+                # imname1 = DIR + '/' + id + ddt + '_img.png'
+                # imname2 = DIR + '/' + id + ddt + '_hm.png'
+                imname3 = DIRR + '/' + id + ddt + '_full.png'
                 # cv2.imwrite(imname, curHeatMap)
                 # cv2.imwrite(imname1, a)
                 # cv2.imwrite(imname2, b)
@@ -207,19 +205,19 @@ def CAM(net, w, pred, x, y, path, name, rd=1):
                 curHeatMap = a * 0.6 + b * 0.4
                 ab = np.hstack((a,b))
                 full = np.hstack((curHeatMap, ab))
-                # imname = DIR + '/' + rd + ddt + str(ij) + '.png'
-                # imname1 = DIR + '/' + rd + ddt + str(ij) + '_img.png'
-                # imname2 = DIR + '/' + rd + ddt + str(ij) + '_hm.png'
-                imname3 = DIR + '/' + rd + ddt + str(ij) + '_full.png'
+                # imname = DIR + '/' + id + ddt + '.png'
+                # imname1 = DIR + '/' + id + ddt +'_img.png'
+                # imname2 = DIR + '/' + id + ddt + '_hm.png'
+                imname3 = DIR + '/' + id + ddt + '_full.png'
                 # cv2.imwrite(imname, curHeatMap)
                 # cv2.imwrite(imname1, a)
                 # cv2.imwrite(imname2, b)
                 cv2.imwrite(imname3, full)
 
 
-def CAM_R(net, w, pred, x, path, name, rd=1):
+def CAM_R(net, w, pred, x, path, name, rd=0):
     DIRR = "../Neutrophil/{}/out/{}_img".format(path, name)
-    rd = str(rd)
+    rd = rd * 1000
 
     try:
         os.mkdir(DIRR)
@@ -231,7 +229,7 @@ def CAM_R(net, w, pred, x, path, name, rd=1):
     prl = (pdx[:,1] > 0.5).astype('uint8')
 
     for ij in range(len(prl)):
-
+        id = str(ij + rd)
         weights_LR = w
         activation_lastconv = np.array([net[ij]])
         weights_LR = weights_LR.T
@@ -242,7 +240,7 @@ def CAM_R(net, w, pred, x, path, name, rd=1):
         scoresMean = np.mean(scores, axis=0)
         ascending_order = np.argsort(scoresMean)
         IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-        curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[0], :])
+        curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[1], :])
         for kk in range(topNum):
             curCAMmap_crops = curCAMmapAll[:, :, kk]
             curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
@@ -262,10 +260,10 @@ def CAM_R(net, w, pred, x, path, name, rd=1):
             curHeatMap = a * 0.6 + b * 0.4
             ab = np.hstack((a,b))
             full = np.hstack((curHeatMap, ab))
-            # imname = DIRR + '/' + rd + '/' + str(ij) + '.png'
-            # imname1 = DIRR + '/' + rd + '/' + str(ij) + '_img.png'
-            # imname2 = DIRR+ '/' + rd + '/' + str(ij) + '_hm.png'
-            imname3 = DIRR + '/' + rd + '/' + str(ij) + '_' + str(prl[ij]) + '_full.png'
+            # imname = DIRR + '/' + id + '.png'
+            # imname1 = DIRR + '/' + id + '_img.png'
+            # imname2 = DIRR + '/' + id +'_hm.png'
+            imname3 = DIRR + '/' + id + '_full.png'
             # cv2.imwrite(imname, curHeatMap)
             # cv2.imwrite(imname1, a)
             # cv2.imwrite(imname2, b)

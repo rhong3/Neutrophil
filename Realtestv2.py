@@ -44,6 +44,7 @@ data_dir = "../Neutrophil/{}/data".format(dirr)
 out_dir = "../Neutrophil/{}/out".format(dirr)
 LOG_DIR = "../Neutrophil"
 file_DIR = "../Neutrophil/{}".format(dirr)
+img_dir = "../Neutrophil/{}-tiles".format(dirr)
 
 try:
     os.mkdir(METAGRAPH_DIR)
@@ -67,6 +68,11 @@ except(FileExistsError):
 
 try:
     os.mkdir(LOG_DIR)
+except(FileExistsError):
+    pass
+
+try:
+    os.mkdir(img_dir)
 except(FileExistsError):
     pass
 
@@ -105,19 +111,18 @@ def loader(totlist_dir):
     sys.stdout.flush()
 
 
-def tfreloader(mode, ep, bs, ctr, cte):
-    filename = data_dir + '/' + mode + '.tfrecords'
-    if mode == 'train':
-        ct = ctr
-    else:
-        ct = cte
+def tfreloader():
+    if not os.path.isfile(data_dir + '/test.tfrecords'):
+        loader(img_dir)
 
-    datasets = TF_data_input.DataSet(mode, filename, ep, bs, ct)
+    filename = data_dir + '/test.tfrecords'
+
+    datasets = TF_data_input.DataSet('test', filename, 1, 1000, None)
 
     return datasets
 
 
-def test(tenum, tec, to_reload=None):
+def test(to_reload=None):
 
     if md == 'IG':
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
@@ -135,71 +140,27 @@ def test(tenum, tec, to_reload=None):
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR)
 
     print("Loaded! Ready for test!", flush=True)
-
-    prlist = []
-    universal = 0
-
-    for a in range(tenum):
-
-        aa = str(a + 1)
-
-        tdat_f = data_dir + '/data-{}.txt'.format(aa)
-
-        HET = load_HE_data(train_dat_name=tdat_f, valid_dat_name=tdat_f)
-
-        if tec >= 5000:
-
-            for b in range(5):
-                x = HET.validation.next_batch(1000)
-                print('Test:')
-                te, tenet, tew = m.inference(x)
-                prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist, universal)
-                universal += 1000
-
-        elif tec in range(1000, 5000):
-            mppp = int(tec / 1000)+1
-
-            for b in range(mppp):
-
-                if b == mppp -1:
-                    x = HET.validation.next_batch(tec%1000)
-                else:
-                    x = HET.validation.next_batch(1000)
-                print('Test:')
-                te, tenet, tew = m.inference(x)
-                prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist, universal)
-                if b == mppp - 1:
-                    universal += (tec%1000)
-                else:
-                    universal += 1000
-
-        else:
-            x, y = HET.validation.next_batch(tec)
-            print('Test:')
-            te, tenet, tew = m.inference(x)
-            prlist = CAM(tenet, tew, te, x, dirr, 'Test', prlist, universal)
-            universal += tec
-    return prlist
+    HE = tfreloader()
+    m.inference(HE, dirr)
 
 # cut tiles with coordinates in the name (exclude white)
 
 start_time = time.time()
 
-if not os.path.isfile(data_dir+'/dict.csv'):
-    get_tilev2.tile(image_file=imgfile, outdir = file_DIR)
+if not os.path.isfile(img_dir+'/dict.csv'):
+    get_tilev2.tile(image_file = imgfile, outdir = img_dir)
 
-dict = pd.read_csv(data_dir+'/dict.csv', header=0)
-tec = len(dict["Num"])
-tenum = int(tec/5000)+1
+dict = pd.read_csv(img_dir+'/dict.csv', header=0)
+print(len(dict["Num"]))
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
-listfinal = test(tenum, tec, to_reload=modeltoload)
-se = pd.Series(listfinal)
-se = se.str.replace(r'\D+', '')
-dict['prediction'] = se
-dict.to_csv(out_dir+'/finaldict.csv', index = False)
+test(to_reload=modeltoload)
 
+teresult = pd.read_csv(out_dir+'/Test.csv', header=0)
 
+joined = pd.merge(dict, teresult, how='inner', on=['Num'])
+
+joined.to_csv(out_dir+'/finaldict.csv', index=False)
 
 # output heat map of pos and neg; and output CAM and assemble them to a big graph.
