@@ -28,6 +28,7 @@ imgfile = sys.argv[2]
 bs = sys.argv[3]
 md = sys.argv[4]
 modeltoload = sys.argv[5]
+metadir = sys.argv[6]
 bs = int(bs)
 
 IMG_DIM = 299
@@ -39,10 +40,10 @@ HYPERPARAMS = {
     "dropout": 0.8,
     "learning_rate": 1E-4
 }
-METAGRAPH_DIR = "../Neutrophil"
+LOG_DIR = "../Neutrophil"
 data_dir = "../Neutrophil/{}/data".format(dirr)
 out_dir = "../Neutrophil/{}/out".format(dirr)
-LOG_DIR = "../Neutrophil"
+METAGRAPH_DIR = "../Neutrophil/{}".format(metadir)
 file_DIR = "../Neutrophil/{}".format(dirr)
 img_dir = "../Neutrophil/{}-tiles".format(dirr)
 

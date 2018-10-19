@@ -29,7 +29,7 @@ class INCEPTION():
 
     def __init__(self, input_dim, d_hyperparams={},
                  save_graph_def=True, meta_graph=None,
-                 log_dir="./log"):
+                 log_dir="./log", meta_dir="./meta"):
 
         self.input_dim = input_dim
         self.__dict__.update(INCEPTION.DEFAULTS, **d_hyperparams)
@@ -38,8 +38,8 @@ class INCEPTION():
         if meta_graph:  # load saved graph
             model_name = os.path.basename(meta_graph)
             meta_graph = os.path.abspath(meta_graph)
-            tf.train.import_meta_graph(log_dir + '/' + model_name +'.meta').restore(
-                self.sesh, log_dir + '/' + model_name)
+            tf.train.import_meta_graph(meta_dir + '/' + model_name +'.meta').restore(
+                self.sesh, meta_dir + '/' + model_name)
             handles = self.sesh.graph.get_collection(INCEPTION.RESTORE_KEY)
 
 
