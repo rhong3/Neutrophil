@@ -121,6 +121,13 @@ def CAM(net, w, pred, x, y, path, name, rd=0):
 
     prl = (pdx[:,1] > 0.5).astype('uint8')
 
+    print(y)
+    print(prl)
+
+    print(len(y))
+    print(len(prl))
+
+
     for ij in range(len(y)):
         id = str(ij + rd)
         if prl[ij] == 0:

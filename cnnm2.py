@@ -157,11 +157,11 @@ class INCEPTION():
                     rd += 1
 
                 except tf.errors.OutOfRangeError:
-                    # # Stop the threads
-                    # coord.request_stop()
-                    #
-                    # # Wait for threads to stop
-                    # coord.join(threads)
+                    # Stop the threads
+                    coord.request_stop()
+
+                    # Wait for threads to stop
+                    coord.join(threads)
                     if Not_Realtest:
                         ac.metrics(pdx, yl, dirr, 'Test')
                     else:
@@ -184,10 +184,10 @@ class INCEPTION():
             x = x.astype(np.uint8)
 
             # Stop the threads
-            # coord.request_stop()
+            coord.request_stop()
 
             # Wait for threads to stop
-            # coord.join(threads)
+            coord.join(threads)
             sess.close()
 
         feed_dict = {self.x_in: x, self.y_in: y,
@@ -256,7 +256,7 @@ class INCEPTION():
 
                                 print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
 
-                        if i == max_iter-int(i/1000)-1 and verbose:  # and i >= 10000:
+                        if i == max_iter-int(i/1000)-2 and verbose:  # and i >= 10000:
 
                             if cross_validate:
                                 now = datetime.now().isoformat()[11:]
@@ -271,7 +271,7 @@ class INCEPTION():
                                 self.valid_logger.add_summary(valid_summary, i)
 
                                 print("round {} --> Last CV cost: ".format(i), valid_cost, flush=True)
-                                ac.CAM(net, w, pred, x, y, dirr, 'Validation')
+                                ac.CAM(net, w, pred, xv, yv, dirr, 'Validation')
                                 ac.metrics(pred, yv, dirr, 'Validation')
                                 now = datetime.now().isoformat()[11:]
                                 print("------- Validation end: {} -------\n".format(now), flush=True)
@@ -284,11 +284,11 @@ class INCEPTION():
 
 
                     except tf.errors.OutOfRangeError:
-                        # # Stop the threads
-                        # coord.request_stop()
-                        #
-                        # # Wait for threads to stop
-                        # coord.join(threads)
+                        # Stop the threads
+                        coord.request_stop()
+
+                        # Wait for threads to stop
+                        coord.join(threads)
                         sessa.close()
 
                         print("final avg cost (@ step {} = epoch {}): {}".format(
