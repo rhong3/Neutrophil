@@ -151,11 +151,11 @@ class INCEPTION():
                     rd += 1
 
                 except tf.errors.OutOfRangeError:
-                    # # Stop the threads
-                    # coord.request_stop()
-                    #
-                    # # Wait for threads to stop
-                    # coord.join(threads)
+                    # Stop the threads
+                    coord.request_stop()
+
+                    # Wait for threads to stop
+                    coord.join(threads)
                     if Not_Realtest:
                         ac.metrics(pdx, yl, dirr, 'Test')
                     else:
@@ -178,10 +178,10 @@ class INCEPTION():
             x = x.astype(np.uint8)
 
             # Stop the threads
-            # coord.request_stop()
+            coord.request_stop()
 
             # Wait for threads to stop
-            # coord.join(threads)
+            coord.join(threads)
             sess.close()
 
         feed_dict = {self.x_in: x, self.y_in: y,
@@ -278,11 +278,11 @@ class INCEPTION():
 
 
                     except tf.errors.OutOfRangeError:
-                        # # Stop the threads
-                        # coord.request_stop()
-                        #
-                        # # Wait for threads to stop
-                        # coord.join(threads)
+                        # Stop the threads
+                        coord.request_stop()
+
+                        # Wait for threads to stop
+                        coord.join(threads)
                         sessa.close()
 
                         print("final avg cost (@ step {} = epoch {}): {}".format(
