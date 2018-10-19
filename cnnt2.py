@@ -255,7 +255,7 @@ class INCEPTION():
 
                                 print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
 
-                        if i == max_iter-3 and verbose:  # and i >= 10000:
+                        if i == max_iter-int(i/1000)-1 and verbose:  # and i >= 10000:
 
                             if cross_validate:
                                 now = datetime.now().isoformat()[11:]
