@@ -67,7 +67,7 @@ class DataSet(object):
 
                 self._images = image
 
-            return self.imgs, self._num_examples
+                return self.imgs, self._num_examples
 
 
 
