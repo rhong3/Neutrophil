@@ -142,7 +142,7 @@ def test(to_reload=None):
 
     print("Loaded! Ready for test!", flush=True)
     HE = tfreloader()
-    m.inference(HE, dirr)
+    m.inference(HE, dirr, Not_Realtest=False)
 
 # cut tiles with coordinates in the name (exclude white)
 
