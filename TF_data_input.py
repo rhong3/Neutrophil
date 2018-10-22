@@ -58,15 +58,18 @@ class DataSet(object):
                 self._images = image
                 self._labels = label
 
+                return self.imgs, self.lbs, self._num_examples
+
             else:
                 self.imgs = tf.train.batch([image], batch_size=batch_size, capacity=5000,
                                                      num_threads=4,
                                                      allow_smaller_final_batch=True)
 
                 self._images = image
-                self._labels = None
 
-        return self.imgs, self.lbs, self._num_examples
+            return self.imgs, self._num_examples
+
+
 
     @property
     def images(self):

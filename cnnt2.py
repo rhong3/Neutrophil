@@ -118,7 +118,11 @@ class INCEPTION():
     def inference(self, X, dirr, train_status=False, Not_Realtest=True):
         now = datetime.now().isoformat()[11:]
         print("------- Testing begin: {} -------\n".format(now), flush=True)
-        x_list, y_list, tnum = X.next_batch()
+        if Not_Realtest:
+            x_list, y_list, tnum = X.next_batch()
+        else:
+            x_list, tnum = X.next_batch()
+            y_list = None
         rd = 0
         pdx = []
         yl = []
