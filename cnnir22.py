@@ -117,7 +117,7 @@ class INCEPTION():
         if Not_Realtest:
             x_list, y_list, tnum = X.next_batch()
         else:
-            x_list, tnum = X.next_batch()
+            x_list, tnum = X.next_batch(Not_Realtest=False)
             y_list = None
         rd = 0
         pdx = []
