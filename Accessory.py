@@ -14,8 +14,7 @@ def realout(pdx, path, name):
     prl = pd.DataFrame(prl, columns=['Prediction'])
     out = pd.DataFrame(pdx, columns=['neg_score', 'pos_score'])
     out = pd.concat([out, prl], axis=1)
-    out.columns[0] = 'Num'
-    out['Num'] = out.index
+    out.insert(loc=0, column='Num', value=out.index)
     out.to_csv("../Neutrophil/{}/out/{}.csv".format(path, name), index=False)
 
 

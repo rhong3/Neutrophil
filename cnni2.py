@@ -134,10 +134,11 @@ class INCEPTION():
                 try:
                     if Not_Realtest:
                         x, y = sessb.run([x_list, y_list])
+                        x = x.astype(np.uint8)
                     else:
                         x = sessb.run([x_list])
                         y = None
-                    x = x.astype(np.uint8)
+                        x = x[0].astype(np.uint8)
                     feed_dict = {self.x_in: x, self.is_train: train_status}
                     fetches = [self.pred, self.net, self.w]
                     pred, net, w = self.sesh.run(fetches, feed_dict)
