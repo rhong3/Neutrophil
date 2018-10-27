@@ -140,10 +140,10 @@ class INCEPTION():
                     feed_dict = {self.x_in: x, self.is_train: train_status}
                     fetches = [self.pred, self.net, self.w]
                     pred, net, w = self.sesh.run(fetches, feed_dict)
-                    if Not_Realtest:
-                        ac.CAM(net, w, pred, x, y, dirr, 'Test', rd)
-                    else:
-                        ac.CAM_R(net, w, pred, x, dirr, 'Test', rd)
+                    # if Not_Realtest:
+                    #     ac.CAM(net, w, pred, x, y, dirr, 'Test', rd)
+                    # else:
+                    #     ac.CAM_R(net, w, pred, x, dirr, 'Test', rd)
 
                     if rd == 0:
                         pdx = pred
