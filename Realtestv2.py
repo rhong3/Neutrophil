@@ -154,7 +154,12 @@ if not os.path.isfile(img_dir+'/dict.csv'):
 else:
     n_x, n_y = get_tilev2.sz(image_file = imgfile)
 
+start_time = time.time()
+
 dict = pd.read_csv(img_dir+'/dict.csv', header=0)
+
+print("--- %s seconds ---" % (time.time() - start_time))
+
 print(len(dict["Num"]))
 
 start_time = time.time()
@@ -177,6 +182,8 @@ print(np.shape(opt))
 poscsv = joined.loc[joined['Prediction'] == 1]
 for index, row in poscsv.iterrows():
     opt[row["X_pos"], row["Y_pos"]] = 255
+
+opt = opt.transpose()
 
 opt = opt.repeat(5, axis=0).repeat(5, axis=1)
 opt = np.dstack([opt, opt, opt])
