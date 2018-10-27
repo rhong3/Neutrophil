@@ -172,10 +172,11 @@ poscsv = joined.loc[joined['Prediction'] == 1]
 for index, row in poscsv.iterrows():
     opt[row["X_pos"], row["Y_pos"]] = 255
 
-opt = opt.transpose()
-
 opt = opt.repeat(5, axis=0).repeat(5, axis=1)
 opt = np.dstack([opt, opt, opt])
+
+print(np.shape(opt))
+
 cv2.imwrite(out_dir+'/final.png', opt)
 
 
