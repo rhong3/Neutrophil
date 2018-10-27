@@ -146,28 +146,17 @@ def test(to_reload=None):
 
 # cut tiles with coordinates in the name (exclude white)
 
-
-
 if not os.path.isfile(img_dir+'/dict.csv'):
     n_x, n_y = get_tilev2.tile(image_file = imgfile, outdir = img_dir)
 
 else:
     n_x, n_y = get_tilev2.sz(image_file = imgfile)
 
-start_time = time.time()
-
 dict = pd.read_csv(img_dir+'/dict.csv', header=0)
-
-print("--- %s seconds ---" % (time.time() - start_time))
 
 print(len(dict["Num"]))
 
-start_time = time.time()
-
 test(to_reload=modeltoload)
-
-print("--- %s seconds ---" % (time.time() - start_time))
-
 
 teresult = pd.read_csv(out_dir+'/Test.csv', header=0)
 
