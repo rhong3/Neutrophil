@@ -149,7 +149,10 @@ def test(to_reload=None):
 start_time = time.time()
 
 if not os.path.isfile(img_dir+'/dict.csv'):
-    get_tilev2.tile(image_file = imgfile, outdir = img_dir)
+    n_x, n_y = get_tilev2.tile(image_file = imgfile, outdir = img_dir)
+
+else:
+    n_x, n_y = get_tilev2.sz(image_file = imgfile)
 
 dict = pd.read_csv(img_dir+'/dict.csv', header=0)
 print(len(dict["Num"]))
@@ -165,3 +168,19 @@ joined = pd.merge(dict, teresult, how='inner', on=['Num'])
 joined.to_csv(out_dir+'/finaldict.csv', index=False)
 
 # output heat map of pos and neg; and output CAM and assemble them to a big graph.
+opt = np.full((n_x, n_y), 0)
+print(np.shape(opt))
+
+for row in joined.iterrows():
+    if row["Prediction"] == 1:
+        opt[row["X_pos"], row["Y_pos"]] = 255
+
+opt = opt.repeat(4, axis=0).repeat(4, axis=1)
+opt = np.dstack([opt, opt, opt])
+cv2.imwrite(out_dir+'/final.png', opt)
+
+
+
+
+
+

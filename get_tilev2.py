@@ -49,7 +49,7 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
             if white < 0.5:
                 the_image.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
                 strr = outdir + "/region_x-{}-y-{}.png".format(target_x, target_y)
-                imloc.append([svcounter, counter, target_x, target_y, strr])
+                imloc.append([svcounter, counter, target_x, target_y, i, j, strr])
                 svcounter += 1
             else:
                 pass
@@ -57,5 +57,30 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
 
             counter += 1
 
-    imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y", "Loc"])
+    imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y", "X_pos", "Y_pos", "Loc"])
     imlocpd.to_csv(outdir + "/dict.csv", index = False)
+
+    return n_x, n_y
+
+def sz(image_file, path_to_slide = "../Neutrophil/"):
+    slide = OpenSlide(path_to_slide+image_file)
+
+    assert 'openslide.bounds-height' in slide.properties
+    assert 'openslide.bounds-width' in slide.properties
+    assert 'openslide.bounds-x' in slide.properties
+    assert 'openslide.bounds-y' in slide.properties
+
+    x = int(slide.properties['openslide.bounds-x'])
+    y = int(slide.properties['openslide.bounds-y'])
+    bounds_height = int(slide.properties['openslide.bounds-height'])
+    bounds_width = int(slide.properties['openslide.bounds-width'])
+
+    half_width_region = 49
+    full_width_region = 299
+    stepsize = full_width_region - half_width_region
+
+    n_x = int((bounds_width - 1) / stepsize)
+    n_y = int((bounds_height - 1) / stepsize)
+
+    return n_x, n_y
+
