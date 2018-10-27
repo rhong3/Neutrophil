@@ -124,7 +124,6 @@ def tfreloader():
 
 
 def test(to_reload=None):
-    start_time = time.time()
 
     if md == 'IG':
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
@@ -140,8 +139,6 @@ def test(to_reload=None):
         m = cnnir22.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
     else:
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
-
-    print("--- %s seconds ---" % (time.time() - start_time))
 
     print("Loaded! Ready for test!", flush=True)
     HE = tfreloader()
