@@ -124,6 +124,7 @@ def tfreloader():
 
 
 def test(to_reload=None):
+    start_time = time.time()
 
     if md == 'IG':
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
@@ -140,13 +141,15 @@ def test(to_reload=None):
     else:
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
 
+    print("--- %s seconds ---" % (time.time() - start_time))
+
     print("Loaded! Ready for test!", flush=True)
     HE = tfreloader()
     m.inference(HE, dirr, Not_Realtest=False)
 
 # cut tiles with coordinates in the name (exclude white)
 
-start_time = time.time()
+
 
 if not os.path.isfile(img_dir+'/dict.csv'):
     n_x, n_y = get_tilev2.tile(image_file = imgfile, outdir = img_dir)
@@ -157,15 +160,12 @@ else:
 dict = pd.read_csv(img_dir+'/dict.csv', header=0)
 print(len(dict["Num"]))
 
-print("--- %s seconds ---" % (time.time() - start_time))
-
 start_time = time.time()
 
 test(to_reload=modeltoload)
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
-start_time = time.time()
 
 teresult = pd.read_csv(out_dir+'/Test.csv', header=0)
 
@@ -173,9 +173,6 @@ joined = pd.merge(dict, teresult, how='inner', on=['Num'])
 
 joined.to_csv(out_dir+'/finaldict.csv', index=False)
 
-print("--- %s seconds ---" % (time.time() - start_time))
-
-start_time = time.time()
 # output heat map of pos and neg; and output CAM and assemble them to a big graph.
 opt = np.full((n_x, n_y), 0)
 print(np.shape(opt))
@@ -184,11 +181,10 @@ poscsv = joined.loc[joined['Prediction'] == 1]
 for index, row in poscsv.iterrows():
     opt[row["X_pos"], row["Y_pos"]] = 255
 
-opt = opt.repeat(4, axis=0).repeat(4, axis=1)
+opt = opt.repeat(5, axis=0).repeat(5, axis=1)
 opt = np.dstack([opt, opt, opt])
 cv2.imwrite(out_dir+'/final.png', opt)
 
-print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
