@@ -164,21 +164,45 @@ joined = pd.merge(dict, teresult, how='inner', on=['Num'])
 
 joined.to_csv(out_dir+'/finaldict.csv', index=False)
 
-# output heat map of pos and neg; and output CAM and assemble them to a big graph.
+start_time = time.time()
+# output heat map of pos and neg.
 opt = np.full((n_x, n_y), 0)
+hm_R = np.full((n_x, n_y), 0)
+hm_G = np.full((n_x, n_y), 0)
+hm_B = np.full((n_x, n_y), 0)
+
 print(np.shape(opt))
 
 poscsv = joined.loc[joined['Prediction'] == 1]
 for index, row in poscsv.iterrows():
     opt[row["X_pos"], row["Y_pos"]] = 255
+    hm_R[row["X_pos"], row["Y_pos"]] = 255
+    hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["pos_score"]-0.5)*2)*255)
+    hm_B[row["X_pos"], row["Y_pos"]] = int((1 - (row["pos_score"] - 0.5) * 2) * 255)
+
+negcsv = joined.loc[joined['Prediction'] == 0]
+for index, row in negcsv.iterrows():
+    opt[row["X_pos"], row["Y_pos"]] = 255
+    hm_B[row["X_pos"], row["Y_pos"]] = 255
+    hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["neg_score"]-0.5)*2)*255)
+    hm_R[row["X_pos"], row["Y_pos"]] = int((1 - (row["neg_score"] - 0.5) * 2) * 255)
+
+opt = np.transpose(opt)
+hm_R = np.transpose(hm_R)
+hm_G = np.transpose(hm_G)
+hm_B = np.transpose(hm_B)
 
 opt = opt.repeat(5, axis=0).repeat(5, axis=1)
-opt = np.dstack([opt, opt, opt])
+hm_R = hm_R.repeat(5, axis=0).repeat(5, axis=1)
+hm_G = hm_G.repeat(5, axis=0).repeat(5, axis=1)
+hm_B = hm_B.repeat(5, axis=0).repeat(5, axis=1)
 
-print(np.shape(opt))
+hm = np.dstack([hm_B, hm_G, hm_R])
 
 cv2.imwrite(out_dir+'/final.png', opt)
+cv2.imwrite(out_dir+'/HM_final.png', hm)
 
+print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
