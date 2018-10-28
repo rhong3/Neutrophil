@@ -164,7 +164,7 @@ joined = pd.merge(dict, teresult, how='inner', on=['Num'])
 
 joined.to_csv(out_dir+'/finaldict.csv', index=False)
 
-start_time = time.time()
+
 # output heat map of pos and neg.
 opt = np.full((n_x, n_y), 0)
 hm_R = np.full((n_x, n_y), 0)
@@ -202,7 +202,9 @@ hm = np.dstack([hm_B, hm_G, hm_R])
 cv2.imwrite(out_dir+'/final.png', opt)
 cv2.imwrite(out_dir+'/HM_final.png', hm)
 
-print("--- %s seconds ---" % (time.time() - start_time))
+# # Time measure tool
+# start_time = time.time()
+# print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
