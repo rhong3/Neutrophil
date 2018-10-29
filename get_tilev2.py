@@ -41,10 +41,12 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
 
             the_image = slide.read_region((image_x, image_y), 0, (full_width_region, full_width_region))
             the_imagea = np.array(the_image)[:,:,:3]
-
+            the_imagea = np.nan_to_num(the_imagea)
             mask = (the_imagea[:,:,:3] > 200).astype(np.uint8)
+            maskb = (the_imagea[:,:,:3] < 5).astype(np.uint8)
             mask = mask[:,:,0]*mask[:,:,1]*mask[:,:,2]
-            white = np.sum(mask)/(299*299)
+            maskb = maskb[:, :, 0] * maskb[:, :, 1] * maskb[:, :, 2]
+            white = (np.sum(mask)+np.sum(maskb))/(299*299)
 
             if white < 0.5:
                 the_image.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
