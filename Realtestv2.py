@@ -22,6 +22,7 @@ import cnnir12
 import cnnir22
 import pandas as pd
 import cv2
+import skimage.morphology as mph
 
 dirr = sys.argv[1]
 imgfile = sys.argv[2]
@@ -147,10 +148,10 @@ def test(to_reload=None):
 # cut tiles with coordinates in the name (exclude white)
 
 if not os.path.isfile(img_dir+'/dict.csv'):
-    n_x, n_y, ori_img, resx, resy = get_tilev2.tile(image_file = imgfile, outdir = img_dir)
+    n_x, n_y, raw_img, resx, resy = get_tilev2.tile(image_file = imgfile, outdir = img_dir)
 
 else:
-    n_x, n_y, ori_img, resx, resy = get_tilev2.sz(image_file = imgfile)
+    n_x, n_y, raw_img, resx, resy = get_tilev2.sz(image_file = imgfile)
 
 dict = pd.read_csv(img_dir+'/dict.csv', header=0)
 
@@ -193,6 +194,7 @@ hm_G = np.transpose(hm_G)
 hm_B = np.transpose(hm_B)
 
 opt = opt.repeat(5, axis=0).repeat(5, axis=1)
+opt = mph.remove_small_objects(opt.astype(bool), min_size=2000, connectivity=2).astype(np.uint8)
 hm_R = hm_R.repeat(5, axis=0).repeat(5, axis=1)
 hm_G = hm_G.repeat(5, axis=0).repeat(5, axis=1)
 hm_B = hm_B.repeat(5, axis=0).repeat(5, axis=1)
@@ -200,17 +202,19 @@ hm_B = hm_B.repeat(5, axis=0).repeat(5, axis=1)
 hm = np.dstack([hm_B, hm_G, hm_R])
 sp = np.shape(hm)
 print(sp)
-ori_img = cv2.resize(ori_img, (sp[1]+resx, sp[0]+resy))
+ori_img = cv2.resize(raw_img, (sp[1]+resx, sp[0]+resy))
 
 ori_img = ori_img[:sp[1], :sp[0], :3]
 
 ori_img = ori_img*(opt/255)
+hm = hm*(opt/255)
 
-overlay = ori_img * 0.6 + hm * 0.4
+overlay = ori_img * 0.65 + hm * 0.35
 
-cv2.imwrite(out_dir+'/final.png', opt)
-cv2.imwrite(out_dir+'/HM_final.png', hm)
-cv2.imwrite(out_dir+'/HW_overlay_final.png', overlay)
+cv2.imwrite(out_dir+'/Original.png', raw_img)
+cv2.imwrite(out_dir+'/Mask.png', opt*255)
+cv2.imwrite(out_dir+'/HM.png', hm)
+cv2.imwrite(out_dir+'/Overlay.png', overlay)
 
 
 # # Time measure tool

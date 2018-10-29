@@ -27,6 +27,7 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     residue_x = int((bounds_width - n_x * stepsize)/50)
     residue_y = int((bounds_height - n_y * stepsize)/50)
     lowres = slide.read_region((x, y), 2, (int(n_x*stepsize/16), int(n_y*stepsize/16)))
+    lowres = np.array(lowres)[:,:,:3]
 
     imloc = []
     counter = 0
@@ -91,6 +92,7 @@ def sz(image_file, path_to_slide = "../Neutrophil/"):
     residue_x = int((bounds_width - n_x * stepsize)/50)
     residue_y = int((bounds_height - n_y * stepsize)/50)
     lowres = slide.read_region((x, y), 2, (int(n_x * stepsize), int(n_y * stepsize)))
+    lowres = np.array(lowres)[:, :, :3]
 
     return n_x, n_y, lowres, residue_x, residue_y
 
