@@ -147,10 +147,10 @@ def test(to_reload=None):
 # cut tiles with coordinates in the name (exclude white)
 
 if not os.path.isfile(img_dir+'/dict.csv'):
-    n_x, n_y = get_tilev2.tile(image_file = imgfile, outdir = img_dir)
+    n_x, n_y, ori_img, resx, resy = get_tilev2.tile(image_file = imgfile, outdir = img_dir)
 
 else:
-    n_x, n_y = get_tilev2.sz(image_file = imgfile)
+    n_x, n_y, ori_img, resx, resy = get_tilev2.sz(image_file = imgfile)
 
 dict = pd.read_csv(img_dir+'/dict.csv', header=0)
 
@@ -198,9 +198,20 @@ hm_G = hm_G.repeat(5, axis=0).repeat(5, axis=1)
 hm_B = hm_B.repeat(5, axis=0).repeat(5, axis=1)
 
 hm = np.dstack([hm_B, hm_G, hm_R])
+sp = np.shape(hm)
+print(sp)
+ori_img = cv2.resize(ori_img, (sp[1]+resx, sp[0]+resy))
+
+ori_img = ori_img[:sp[1], :sp[0], :3]
+
+ori_img = ori_img*(opt/255)
+
+overlay = ori_img * 0.6 + hm * 0.4
 
 cv2.imwrite(out_dir+'/final.png', opt)
 cv2.imwrite(out_dir+'/HM_final.png', hm)
+cv2.imwrite(out_dir+'/HW_overlay_final.png', overlay)
+
 
 # # Time measure tool
 # start_time = time.time()

@@ -24,6 +24,10 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     n_x = int((bounds_width - 1) / stepsize)
     n_y = int((bounds_height - 1) / stepsize)
 
+    residue_x = int((bounds_width - n_x * stepsize)/50)
+    residue_y = int((bounds_height - n_y * stepsize)/50)
+    lowres = slide.read_region((x, y), 2, (int(n_x*stepsize/16), int(n_y*stepsize/16)))
+
     imloc = []
     counter = 0
     svcounter = 0
@@ -62,7 +66,7 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y", "X_pos", "Y_pos", "Loc"])
     imlocpd.to_csv(outdir + "/dict.csv", index = False)
 
-    return n_x, n_y
+    return n_x, n_y, lowres, residue_x, residue_y
 
 def sz(image_file, path_to_slide = "../Neutrophil/"):
     slide = OpenSlide(path_to_slide+image_file)
@@ -84,5 +88,9 @@ def sz(image_file, path_to_slide = "../Neutrophil/"):
     n_x = int((bounds_width - 1) / stepsize)
     n_y = int((bounds_height - 1) / stepsize)
 
-    return n_x, n_y
+    residue_x = int((bounds_width - n_x * stepsize)/50)
+    residue_y = int((bounds_height - n_y * stepsize)/50)
+    lowres = slide.read_region((x, y), 2, (int(n_x * stepsize), int(n_y * stepsize)))
+
+    return n_x, n_y, lowres, residue_x, residue_y
 
