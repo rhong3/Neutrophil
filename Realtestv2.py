@@ -210,7 +210,7 @@ ori_img = ori_img[:sp[1], :sp[0], :3]
 print(np.shape(ori_img))
 print(np.shape(opt))
 
-ori_img = ori_img*(opt/255)
+ori_img = ori_img*(np.transpose(opt)/255)
 hm = hm*(opt/255)
 
 overlay = ori_img * 0.65 + hm * 0.35
