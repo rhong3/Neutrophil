@@ -61,7 +61,6 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
             else:
                 pass
                 # print('Ignore white!')
-
             counter += 1
 
     imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y", "X_pos", "Y_pos", "Loc"])
