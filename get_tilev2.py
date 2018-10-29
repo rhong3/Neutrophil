@@ -69,6 +69,7 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
 
     return n_x, n_y, lowres, residue_x, residue_y
 
+
 def sz(image_file, path_to_slide = "../Neutrophil/"):
     slide = OpenSlide(path_to_slide+image_file)
 
