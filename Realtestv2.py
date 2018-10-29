@@ -202,9 +202,9 @@ hm_B = hm_B.repeat(5, axis=0).repeat(5, axis=1)
 hm = np.dstack([hm_B, hm_G, hm_R])
 sp = np.shape(hm)
 print(sp)
-ori_img = cv2.resize(raw_img, (sp[1]+resx, sp[0]+resy))
+ori_img = cv2.resize(raw_img, (sp[0]+resx, sp[1]+resy))
 
-ori_img = ori_img[:sp[1], :sp[0], :3]
+ori_img = ori_img[:sp[0], :sp[1], :3]
 
 ori_img = ori_img*(opt/255)
 hm = hm*(opt/255)
