@@ -188,36 +188,32 @@ for index, row in negcsv.iterrows():
     hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["neg_score"]-0.5)*2)*255)
     hm_R[row["X_pos"], row["Y_pos"]] = int((1 - (row["neg_score"] - 0.5) * 2) * 255)
 
-opt = np.transpose(opt)
+opt = opt.repeat(5, axis=0).repeat(5, axis=1)
+opt = mph.remove_small_objects(opt.astype(bool), min_size=500, connectivity=2).astype(np.uint8)
+
+ori_img = cv2.resize(raw_img, (np.shape(opt)[0]+resx, np.shape(opt)[1]+resy))
+ori_img = ori_img[:np.shape(opt)[1], :np.shape(opt)[0], :3]
+cv2.imwrite(out_dir+'/Original_scaled.png', ori_img)
+
+topt = np.transpose(opt)
+opt = np.full((np.shape(topt)[0], np.shape(topt)[1], 3), 0)
+opt[:,:,0] = topt
+opt[:,:,1] = topt
+opt[:,:,2] = topt
+cv2.imwrite(out_dir+'/Mask.png', opt*255)
+
 hm_R = np.transpose(hm_R)
 hm_G = np.transpose(hm_G)
 hm_B = np.transpose(hm_B)
-
-opt = opt.repeat(5, axis=0).repeat(5, axis=1)
-opt = mph.remove_small_objects(opt.astype(bool), min_size=2000, connectivity=2).astype(np.uint8)
 hm_R = hm_R.repeat(5, axis=0).repeat(5, axis=1)
 hm_G = hm_G.repeat(5, axis=0).repeat(5, axis=1)
 hm_B = hm_B.repeat(5, axis=0).repeat(5, axis=1)
-
 hm = np.dstack([hm_B, hm_G, hm_R])
-sp = np.shape(hm)
-print(sp)
-ori_img = cv2.resize(raw_img, (sp[0]+resx, sp[1]+resy))
-print(np.shape(raw_img))
-print(np.shape(ori_img))
-
-ori_img = ori_img[:sp[1], :sp[0], :3]
-print(np.shape(ori_img))
-print(np.shape(opt))
-
-ori_img = ori_img*(np.transpose(opt)/255)
-hm = hm*(opt/255)
-
-overlay = ori_img * 0.65 + hm * 0.35
-
-cv2.imwrite(out_dir+'/Original.png', raw_img)
-cv2.imwrite(out_dir+'/Mask.png', opt*255)
+hm = hm*opt
 cv2.imwrite(out_dir+'/HM.png', hm)
+
+ori_img = ori_img*opt
+overlay = ori_img * 0.65 + hm * 0.35
 cv2.imwrite(out_dir+'/Overlay.png', overlay)
 
 
