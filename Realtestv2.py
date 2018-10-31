@@ -193,6 +193,9 @@ opt = mph.remove_small_objects(opt.astype(bool), min_size=500, connectivity=2).a
 
 ori_img = cv2.resize(raw_img, (np.shape(opt)[0]+resx, np.shape(opt)[1]+resy))
 ori_img = ori_img[:np.shape(opt)[1], :np.shape(opt)[0], :3]
+tq = ori_img[:,:,0]
+ori_img[:,:,0] = ori_img[:,:,2]
+ori_img[:,:,2] = tq
 cv2.imwrite(out_dir+'/Original_scaled.png', ori_img)
 
 topt = np.transpose(opt)
