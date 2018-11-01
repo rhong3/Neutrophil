@@ -82,7 +82,7 @@ def py_returnCAMmap(activation, weights_LR):
     for t in range(n_top):
         weights_vec = np.reshape(weights_LR[t], [1, weights_LR[t].shape[0]])
         heatmap_vec = np.dot(weights_vec,act_vec)
-        heatmap = np.reshape( np.squeeze(heatmap_vec) , [w, h])
+        heatmap = np.reshape(np.squeeze(heatmap_vec), [w, h])
         out[:,:,t] = heatmap
 
     return out
