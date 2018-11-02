@@ -148,10 +148,10 @@ def test(to_reload=None):
 # cut tiles with coordinates in the name (exclude white)
 
 if not os.path.isfile(img_dir+'/dict.csv'):
-    n_x, n_y, raw_img, resx, resy = get_tilev2.tile(image_file = imgfile, outdir = img_dir)
+    n_x, n_y, raw_img, resx, resy = get_tilev3.tile(image_file = imgfile, outdir = img_dir)
 
 else:
-    n_x, n_y, raw_img, resx, resy = get_tilev2.sz(image_file = imgfile)
+    n_x, n_y, raw_img, resx, resy = get_tilev3.sz(image_file = imgfile)
 
 dict = pd.read_csv(img_dir+'/dict.csv', header=0)
 

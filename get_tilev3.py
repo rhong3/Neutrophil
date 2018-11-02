@@ -16,12 +16,13 @@ def bgcheck(img):
     return white
 
 
-def v_slide(slide, outdir, n_y, x, y, tile_size, stepsize, imloc, x0):
+def v_slide(slp, outdir, n_y, x, y, tile_size, stepsize, x0):
     # pid = os.getpid()
-    # logger.debug(f'{pid}: start working...')
-    # logger.debug(f'worker {pid} working on {filename}...')
+    # print('{}: start working'.format(pid))
+    slide = OpenSlide(slp)
+    imloc = []
     y0 = 0
-    target_x = x * stepsize
+    target_x = x0 * stepsize
     image_x = target_x + x
     while y0 < n_y:
         target_y = y0 * stepsize
@@ -29,15 +30,17 @@ def v_slide(slide, outdir, n_y, x, y, tile_size, stepsize, imloc, x0):
         img = slide.read_region((image_x, image_y), 0, (tile_size, tile_size))
         wscore = bgcheck(img)
         if wscore < 0.5:
-            img.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
+            # img.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
             strr = outdir + "/region_x-{}-y-{}.png".format(target_x, target_y)
             imloc.append([x0, y0, target_x, target_y, strr])
         y0 += 1
-
+    slide.close()
     return imloc
+
 
 def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     slide = OpenSlide(path_to_slide+image_file)
+    slp = str(path_to_slide+image_file)
 
     assert 'openslide.bounds-height' in slide.properties
     assert 'openslide.bounds-width' in slide.properties
@@ -61,28 +64,35 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     lowres = slide.read_region((x, y), 2, (int(n_x*stepsize/16), int(n_y*stepsize/16)))
     lowres = np.array(lowres)[:,:,:3]
 
-    imloc = []
-
     if not os.path.exists(outdir):
             os.makedirs(outdir)
+    slide.close()
 
     x0 = 0
     # create multiporcessing pool
-    pool = mp.Pool(mp.cpu_count())
+    print(mp.cpu_count())
+    pool = mp.Pool(processes=mp.cpu_count())
     tasks = []
     while x0 < n_x:
-        task = [slide, outdir, n_y, x, y, full_width_region, stepsize, imloc, x0]
+        task = tuple((slp, outdir, n_y, x, y, full_width_region, stepsize, x0))
         tasks.append(task)
         x0 += 1
-
     # slice images with multiprocessing
-    temp = pool.map(v_slide, tasks)
+    temp = pool.starmap(v_slide, tasks)
     pool.close()
     pool.join()
 
-    print(temp)
-
-    imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y", "X_pos", "Y_pos", "Loc"])
+    temp = list(filter(None, temp))
+    imloc = []
+    list(map(imloc.extend, temp))
+    print(imloc)
+    imlocpd = pd.DataFrame(imloc, columns = ["X_pos", "Y_pos", "X", "Y", "Loc"])
+    print(imlocpd)
+    imlocpd = imlocpd.sort_values(["X_pos", "Y_pos"], ascending=[True, True])
+    imlocpd = imlocpd.reset_index(drop=True)
+    imlocpd = imlocpd.reset_index(drop=False)
+    imlocpd.columns = ["Num", "X_pos", "Y_pos", "X", "Y", "Loc"]
+    print(imlocpd)
     imlocpd.to_csv(outdir + "/dict.csv", index = False)
 
     return n_x, n_y, lowres, residue_x, residue_y
