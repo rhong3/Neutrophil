@@ -30,7 +30,7 @@ def v_slide(slp, outdir, n_y, x, y, tile_size, stepsize, x0):
         img = slide.read_region((image_x, image_y), 0, (tile_size, tile_size))
         wscore = bgcheck(img)
         if wscore < 0.5:
-            # img.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
+            img.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
             strr = outdir + "/region_x-{}-y-{}.png".format(target_x, target_y)
             imloc.append([x0, y0, target_x, target_y, strr])
         y0 += 1
