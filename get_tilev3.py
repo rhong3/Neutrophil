@@ -2,7 +2,39 @@ from openslide import OpenSlide
 import numpy as np
 import pandas as pd
 import os
+import multiprocessing as mp
 
+
+def bgcheck(img):
+    the_imagea = np.array(img)[:, :, :3]
+    the_imagea = np.nan_to_num(the_imagea)
+    mask = (the_imagea[:, :, :3] > 200).astype(np.uint8)
+    maskb = (the_imagea[:, :, :3] < 5).astype(np.uint8)
+    mask = mask[:, :, 0] * mask[:, :, 1] * mask[:, :, 2]
+    maskb = maskb[:, :, 0] * maskb[:, :, 1] * maskb[:, :, 2]
+    white = (np.sum(mask) + np.sum(maskb)) / (299 * 299)
+    return white
+
+
+def v_slide(slide, outdir, n_y, x, y, tile_size, stepsize, imloc, x0):
+    # pid = os.getpid()
+    # logger.debug(f'{pid}: start working...')
+    # logger.debug(f'worker {pid} working on {filename}...')
+    y0 = 0
+    target_x = x * stepsize
+    image_x = target_x + x
+    while y0 < n_y:
+        target_y = y0 * stepsize
+        image_y = target_y + y
+        img = slide.read_region((image_x, image_y), 0, (tile_size, tile_size))
+        wscore = bgcheck(img)
+        if wscore < 0.5:
+            img.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
+            strr = outdir + "/region_x-{}-y-{}.png".format(target_x, target_y)
+            imloc.append([x0, y0, target_x, target_y, strr])
+        y0 += 1
+
+    return imloc
 
 def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     slide = OpenSlide(path_to_slide+image_file)
@@ -30,38 +62,25 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     lowres = np.array(lowres)[:,:,:3]
 
     imloc = []
-    counter = 0
-    svcounter = 0
 
     if not os.path.exists(outdir):
             os.makedirs(outdir)
 
-    for i in range(n_x - 1):
-        for j in range(n_y - 1):
-            target_x = stepsize * i
-            target_y = stepsize * j
+    x0 = 0
+    # create multiporcessing pool
+    pool = mp.Pool(mp.cpu_count())
+    tasks = []
+    while x0 < n_x:
+        task = [slide, outdir, n_y, x, y, full_width_region, stepsize, imloc, x0]
+        tasks.append(task)
+        x0 += 1
 
-            image_x = target_x + x
-            image_y = target_y + y
+    # slice images with multiprocessing
+    temp = pool.map(v_slide, tasks)
+    pool.close()
+    pool.join()
 
-            the_image = slide.read_region((image_x, image_y), 0, (full_width_region, full_width_region))
-            the_imagea = np.array(the_image)[:,:,:3]
-            the_imagea = np.nan_to_num(the_imagea)
-            mask = (the_imagea[:,:,:3] > 200).astype(np.uint8)
-            maskb = (the_imagea[:,:,:3] < 5).astype(np.uint8)
-            mask = mask[:,:,0]*mask[:,:,1]*mask[:,:,2]
-            maskb = maskb[:, :, 0] * maskb[:, :, 1] * maskb[:, :, 2]
-            white = (np.sum(mask)+np.sum(maskb))/(299*299)
-
-            if white < 0.5:
-                the_image.save(outdir + "/region_x-{}-y-{}.png".format(target_x, target_y))
-                strr = outdir + "/region_x-{}-y-{}.png".format(target_x, target_y)
-                imloc.append([svcounter, counter, target_x, target_y, i, j, strr])
-                svcounter += 1
-            else:
-                pass
-                # print('Ignore white!')
-            counter += 1
+    print(temp)
 
     imlocpd = pd.DataFrame(imloc, columns = ["Num", "Count", "X", "Y", "X_pos", "Y_pos", "Loc"])
     imlocpd.to_csv(outdir + "/dict.csv", index = False)
