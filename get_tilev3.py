@@ -85,14 +85,11 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     temp = list(filter(None, temp))
     imloc = []
     list(map(imloc.extend, temp))
-    print(imloc)
     imlocpd = pd.DataFrame(imloc, columns = ["X_pos", "Y_pos", "X", "Y", "Loc"])
-    print(imlocpd)
     imlocpd = imlocpd.sort_values(["X_pos", "Y_pos"], ascending=[True, True])
     imlocpd = imlocpd.reset_index(drop=True)
     imlocpd = imlocpd.reset_index(drop=False)
     imlocpd.columns = ["Num", "X_pos", "Y_pos", "X", "Y", "Loc"]
-    print(imlocpd)
     imlocpd.to_csv(outdir + "/dict.csv", index = False)
 
     return n_x, n_y, lowres, residue_x, residue_y
