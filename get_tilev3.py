@@ -32,7 +32,7 @@ def v_slide(slp, n_y, x, y, tile_size, stepsize, x0):
         wscore = bgcheck(img)
         if wscore < 0.5:
             imloc.append([x0, y0, target_x, target_y])
-            imlist.append(np.array(img))
+            imlist.append(np.array(img)[:, :, :3])
         y0 += 1
     slide.close()
     return imloc, imlist
@@ -96,10 +96,11 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     imglist = []
     list(map(imglist.extend, tempimglist))
     print(len(imglist))
+    ct = len(imglist)
     tempimglist = None
     imglist = np.asarray(imglist)
 
 
-    return n_x, n_y, lowres, residue_x, residue_y, imglist
+    return n_x, n_y, lowres, residue_x, residue_y, imglist, ct
 
 

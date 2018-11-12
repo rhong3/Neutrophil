@@ -13,7 +13,7 @@ import os
 import sys
 import numpy as np
 import tensorflow as tf
-import TF_data_input
+import data_input
 import cnnm2
 import cnng2
 import cnni2
@@ -72,62 +72,13 @@ try:
 except(FileExistsError):
     pass
 
-# def load_image(addr):
-#     img = cv2.imread(addr)
-#     img = img.astype(np.float32)
-#     return img
-#
-#
-# def _int64_feature(value):
-#   return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
-# def _bytes_feature(value):
-#   return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-
-# def loader(totlist_dir):
-#     telist = pd.read_csv(totlist_dir+'/dict.csv', header=0)
-#     teimlist = telist['Loc'].values.tolist()
-#
-#     test_filename = data_dir+'/test.tfrecords'
-#     writer = tf.python_io.TFRecordWriter(test_filename)
-#     for i in range(len(teimlist)):
-#         if not i % 1000:
-#             sys.stdout.flush()
-#         # Load the image
-#         img = load_image(teimlist[i])
-#         # Create a feature
-#         feature = {'test/image': _bytes_feature(tf.compat.as_bytes(img.tostring()))}
-#         # Create an example protocol buffer
-#         example = tf.train.Example(features=tf.train.Features(feature=feature))
-#
-#         # Serialize to string and write on the file
-#         writer.write(example.SerializeToString())
-#
-#     writer.close()
-#     sys.stdout.flush()
-#
-#
-# def tfreloader():
-#     if not os.path.isfile(data_dir + '/test.tfrecords'):
-#         loader(img_dir)
-#
-#     filename = data_dir + '/test.tfrecords'
-#
-#     datasets = TF_data_input.DataSet('test', filename, 1, 1000, None)
-#
-#     return datasets
-
-def loader(images):
-    features = images
-    features_placeholder = tf.placeholder(features.dtype, features.shape)
-    dataset = tf.data.Dataset.from_tensor_slices(features_placeholder)
-    iterator = dataset.make_initializable_iterator()
-    with tf.Session() as sess:
-        sess.run(iterator.initializer, feed_dict={features_placeholder: features})
+def loader(images, ct):
+    dataset = data_input.DataSet(images, 1000, ct)
     return dataset
 
 
-def test(images, to_reload=None):
+def test(images, count, to_reload=None):
 
     if md == 'IG':
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
@@ -145,82 +96,83 @@ def test(images, to_reload=None):
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
 
     print("Loaded! Ready for test!", flush=True)
-    HE = loader(images)
-    print(HE)
+    HE = loader(images, ct)
     m.inference(HE, dirr, Not_Realtest=False)
 
 # cut tiles with coordinates in the name (exclude white)
 start_time = time.time()
-n_x, n_y, raw_img, resx, resy, imgs = get_tilev3.tile(image_file = imgfile, outdir = out_dir)
+n_x, n_y, raw_img, resx, resy, imgs, ct = get_tilev3.tile(image_file = imgfile, outdir = out_dir)
 print("--- %s seconds ---" % (time.time() - start_time))
+
+print(np.shape(imgs))
 
 dict = pd.read_csv(out_dir+'/dict.csv', header=0)
 
-test(imgs, to_reload=modeltoload)
-#
-# teresult = pd.read_csv(out_dir+'/Test.csv', header=0)
-#
-# joined = pd.merge(dict, teresult, how='inner', on=['Num'])
-#
-# joined.to_csv(out_dir+'/finaldict.csv', index=False)
-#
-# # output heat map of pos and neg.
-# opt = np.full((n_x, n_y), 0)
-# hm_R = np.full((n_x, n_y), 0)
-# hm_G = np.full((n_x, n_y), 0)
-# hm_B = np.full((n_x, n_y), 0)
-#
-# print(np.shape(opt))
-#
-# poscsv = joined.loc[joined['Prediction'] == 1]
-# for index, row in poscsv.iterrows():
-#     opt[row["X_pos"], row["Y_pos"]] = 255
-#     hm_R[row["X_pos"], row["Y_pos"]] = 255
-#     hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["pos_score"]-0.5)*2)*255)
-#     hm_B[row["X_pos"], row["Y_pos"]] = int((1 - (row["pos_score"] - 0.5) * 2) * 255)
-#
-# negcsv = joined.loc[joined['Prediction'] == 0]
-# for index, row in negcsv.iterrows():
-#     opt[row["X_pos"], row["Y_pos"]] = 255
-#     hm_B[row["X_pos"], row["Y_pos"]] = 255
-#     hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["neg_score"]-0.5)*2)*255)
-#     hm_R[row["X_pos"], row["Y_pos"]] = int((1 - (row["neg_score"] - 0.5) * 2) * 255)
-#
-# opt = opt.repeat(5, axis=0).repeat(5, axis=1)
-# opt = mph.remove_small_objects(opt.astype(bool), min_size=500, connectivity=2).astype(np.uint8)
-#
-# ori_img = cv2.resize(raw_img, (np.shape(opt)[0]+resx, np.shape(opt)[1]+resy))
-# ori_img = ori_img[:np.shape(opt)[1], :np.shape(opt)[0], :3]
-# tq = ori_img[:,:,0]
-# ori_img[:,:,0] = ori_img[:,:,2]
-# ori_img[:,:,2] = tq
-# cv2.imwrite(out_dir+'/Original_scaled.png', ori_img)
-#
-# topt = np.transpose(opt)
-# opt = np.full((np.shape(topt)[0], np.shape(topt)[1], 3), 0)
-# opt[:,:,0] = topt
-# opt[:,:,1] = topt
-# opt[:,:,2] = topt
-# cv2.imwrite(out_dir+'/Mask.png', opt*255)
-#
-# hm_R = np.transpose(hm_R)
-# hm_G = np.transpose(hm_G)
-# hm_B = np.transpose(hm_B)
-# hm_R = hm_R.repeat(5, axis=0).repeat(5, axis=1)
-# hm_G = hm_G.repeat(5, axis=0).repeat(5, axis=1)
-# hm_B = hm_B.repeat(5, axis=0).repeat(5, axis=1)
-# hm = np.dstack([hm_B, hm_G, hm_R])
-# hm = hm*opt
-# cv2.imwrite(out_dir+'/HM.png', hm)
-#
-# ori_img = ori_img*opt
-# overlay = ori_img * 0.65 + hm * 0.35
-# cv2.imwrite(out_dir+'/Overlay.png', overlay)
+test(imgs, ct, to_reload=modeltoload)
+
+teresult = pd.read_csv(out_dir+'/Test.csv', header=0)
+
+joined = pd.merge(dict, teresult, how='inner', on=['Num'])
+
+joined.to_csv(out_dir+'/finaldict.csv', index=False)
+
+# output heat map of pos and neg.
+opt = np.full((n_x, n_y), 0)
+hm_R = np.full((n_x, n_y), 0)
+hm_G = np.full((n_x, n_y), 0)
+hm_B = np.full((n_x, n_y), 0)
+
+print(np.shape(opt))
+
+poscsv = joined.loc[joined['Prediction'] == 1]
+for index, row in poscsv.iterrows():
+    opt[row["X_pos"], row["Y_pos"]] = 255
+    hm_R[row["X_pos"], row["Y_pos"]] = 255
+    hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["pos_score"]-0.5)*2)*255)
+    hm_B[row["X_pos"], row["Y_pos"]] = int((1 - (row["pos_score"] - 0.5) * 2) * 255)
+
+negcsv = joined.loc[joined['Prediction'] == 0]
+for index, row in negcsv.iterrows():
+    opt[row["X_pos"], row["Y_pos"]] = 255
+    hm_B[row["X_pos"], row["Y_pos"]] = 255
+    hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["neg_score"]-0.5)*2)*255)
+    hm_R[row["X_pos"], row["Y_pos"]] = int((1 - (row["neg_score"] - 0.5) * 2) * 255)
+
+opt = opt.repeat(5, axis=0).repeat(5, axis=1)
+opt = mph.remove_small_objects(opt.astype(bool), min_size=500, connectivity=2).astype(np.uint8)
+
+ori_img = cv2.resize(raw_img, (np.shape(opt)[0]+resx, np.shape(opt)[1]+resy))
+ori_img = ori_img[:np.shape(opt)[1], :np.shape(opt)[0], :3]
+tq = ori_img[:,:,0]
+ori_img[:,:,0] = ori_img[:,:,2]
+ori_img[:,:,2] = tq
+cv2.imwrite(out_dir+'/Original_scaled.png', ori_img)
+
+topt = np.transpose(opt)
+opt = np.full((np.shape(topt)[0], np.shape(topt)[1], 3), 0)
+opt[:,:,0] = topt
+opt[:,:,1] = topt
+opt[:,:,2] = topt
+cv2.imwrite(out_dir+'/Mask.png', opt*255)
+
+hm_R = np.transpose(hm_R)
+hm_G = np.transpose(hm_G)
+hm_B = np.transpose(hm_B)
+hm_R = hm_R.repeat(5, axis=0).repeat(5, axis=1)
+hm_G = hm_G.repeat(5, axis=0).repeat(5, axis=1)
+hm_B = hm_B.repeat(5, axis=0).repeat(5, axis=1)
+hm = np.dstack([hm_B, hm_G, hm_R])
+hm = hm*opt
+cv2.imwrite(out_dir+'/HM.png', hm)
+
+ori_img = ori_img*opt
+overlay = ori_img * 0.65 + hm * 0.35
+cv2.imwrite(out_dir+'/Overlay.png', overlay)
 
 
-# # Time measure tool
-# start_time = time.time()
-# print("--- %s seconds ---" % (time.time() - start_time))
+# Time measure tool
+start_time = time.time()
+print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
