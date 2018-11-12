@@ -12,14 +12,13 @@ matplotlib.use('Agg')
 import os
 import sys
 import numpy as np
-import tensorflow as tf
 import data_input
 import cnnm2
 import cnng2
 import cnni2
 import cnnt2
 import cnnir12
-import cnnir22
+import cnnir23
 import pandas as pd
 import cv2
 import skimage.morphology as mph
@@ -91,7 +90,7 @@ def test(images, count, to_reload=None):
     elif md == 'IR1':
         m = cnnir12.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
     elif md == 'IR2':
-        m = cnnir22.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
+        m = cnnir23.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
     else:
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
 
@@ -103,8 +102,6 @@ def test(images, count, to_reload=None):
 start_time = time.time()
 n_x, n_y, raw_img, resx, resy, imgs, ct = get_tilev3.tile(image_file = imgfile, outdir = out_dir)
 print("--- %s seconds ---" % (time.time() - start_time))
-
-print(np.shape(imgs))
 
 dict = pd.read_csv(out_dir+'/dict.csv', header=0)
 

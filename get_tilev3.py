@@ -1,7 +1,6 @@
 from openslide import OpenSlide
 import numpy as np
 import pandas as pd
-import os
 import multiprocessing as mp
 
 
@@ -67,7 +66,7 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     x0 = 0
     # create multiporcessing pool
     print(mp.cpu_count())
-    pool = mp.Pool(processes=mp.cpu_count())
+    pool = mp.Pool(processes=mp.cpu_count()*10)
     tasks = []
     while x0 < n_x:
         task = tuple((slp, n_y, x, y, full_width_region, stepsize, x0))
@@ -95,7 +94,6 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     tempimglist = list(filter(None, tempimglist))
     imglist = []
     list(map(imglist.extend, tempimglist))
-    print(len(imglist))
     ct = len(imglist)
     tempimglist = None
     imglist = np.asarray(imglist)

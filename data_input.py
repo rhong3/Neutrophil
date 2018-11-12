@@ -17,11 +17,16 @@ class DataSet(object):
 
     def next_batch(self, Not_Realtest=False):
         batch_size = self._batchsize
+        features_placeholder = tf.placeholder(self._images.dtype, self._images.shape)
+        dataset = tf.data.Dataset.from_tensor_slices(features_placeholder)
+        batched_dataset = dataset.batch(batch_size, drop_remainder=False)
+        iterator = batched_dataset.make_initializable_iterator()
+        next_element = iterator.get_next()
         with tf.Session() as sess:
-            self._images = tf.train.batch([self._images], batch_size=batch_size, capacity=5000,
-                                                     num_threads=4,
-                                                     allow_smaller_final_batch=True)
-            return self._images, self._num_examples
+            sess.run(iterator.initializer, feed_dict={features_placeholder: self._images})
+            # batch = tf.cast(sess.run(next_element), tf.float32)
+            batch = sess.run(next_element)
+        return batch
 
     @property
     def images(self):
