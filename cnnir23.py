@@ -111,13 +111,13 @@ class INCEPTION():
                 y_in, logits, nett, ww, pred, pred_cost,
                 global_step, train_op, merged_summary)
 
-    def inference(self, X, dirr, train_status=False, Not_Realtest=True):
+    def inference(self, X, ct, bs,  dirr, train_status=False, Not_Realtest=True):
         now = datetime.now().isoformat()[11:]
         print("------- Testing begin: {} -------\n".format(now), flush=True)
         rd = 0
         pdx = []
         yl = []
-        while True:
+        for rd in range(int(ct/bs)+1):
             try:
                 print(rd)
                 if Not_Realtest:
@@ -140,7 +140,6 @@ class INCEPTION():
                     pdx = np.concatenate((pdx, pred), axis=0)
                     yl = np.concatenate((yl, y), axis=None)
                 rd += 1
-
             except tf.errors.OutOfRangeError:
                 if Not_Realtest:
                     ac.metrics(pdx, yl, dirr, 'Test')
@@ -149,6 +148,12 @@ class INCEPTION():
                 now = datetime.now().isoformat()[11:]
                 print("------- Testing end: {} -------\n".format(now), flush=True)
                 break
+        if Not_Realtest:
+            ac.metrics(pdx, yl, dirr, 'Test')
+        else:
+            ac.realout(pdx, dirr, 'Test')
+        now = datetime.now().isoformat()[11:]
+        print("------- Testing end: {} -------\n".format(now), flush=True)
 
 
     def get_global_step(self, X):

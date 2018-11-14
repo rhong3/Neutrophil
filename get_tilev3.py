@@ -66,7 +66,7 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     x0 = 0
     # create multiporcessing pool
     print(mp.cpu_count())
-    pool = mp.Pool(processes=mp.cpu_count()*10)
+    pool = mp.Pool(processes=8)
     tasks = []
     while x0 < n_x:
         task = tuple((slp, n_y, x, y, full_width_region, stepsize, x0))

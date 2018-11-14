@@ -72,12 +72,12 @@ except(FileExistsError):
     pass
 
 
-def loader(images, ct):
-    dataset = data_input.DataSet(images, 1000, ct)
+def loader(images, bs, ct):
+    dataset = data_input.DataSet(images, bs, ct)
     return dataset
 
 
-def test(images, count, to_reload=None):
+def test(images, count, bs, to_reload=None):
 
     if md == 'IG':
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
@@ -94,9 +94,9 @@ def test(images, count, to_reload=None):
     else:
         m = cnng2.INCEPTION(INPUT_DIM, HYPERPARAMS, meta_graph=to_reload, log_dir=LOG_DIR, meta_dir=METAGRAPH_DIR)
 
-    print("Loaded! Ready for test!", flush=True)
-    HE = loader(images, ct)
-    m.inference(HE, dirr, Not_Realtest=False)
+    print("Loaded! Ready for test!")
+    HE = loader(images, bs, count)
+    m.inference(HE, count, bs, dirr, Not_Realtest=False)
 
 # cut tiles with coordinates in the name (exclude white)
 start_time = time.time()
@@ -105,7 +105,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 
 dict = pd.read_csv(out_dir+'/dict.csv', header=0)
 
-test(imgs, ct, to_reload=modeltoload)
+test(imgs, ct, bs, to_reload=modeltoload)
 
 teresult = pd.read_csv(out_dir+'/Test.csv', header=0)
 
@@ -122,6 +122,8 @@ hm_B = np.full((n_x, n_y), 0)
 print(np.shape(opt))
 
 poscsv = joined.loc[joined['Prediction'] == 1]
+poscsv['X_pos'] = poscsv['X_pos'].astype(np.uint8)
+poscsv['Y_pos'] = poscsv['Y_pos'].astype(np.uint8)
 for index, row in poscsv.iterrows():
     opt[row["X_pos"], row["Y_pos"]] = 255
     hm_R[row["X_pos"], row["Y_pos"]] = 255

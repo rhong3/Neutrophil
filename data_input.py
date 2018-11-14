@@ -19,12 +19,12 @@ class DataSet(object):
         batch_size = self._batchsize
         features_placeholder = tf.placeholder(self._images.dtype, self._images.shape)
         dataset = tf.data.Dataset.from_tensor_slices(features_placeholder)
+        dataset = dataset.repeat(1)
         batched_dataset = dataset.batch(batch_size, drop_remainder=False)
         iterator = batched_dataset.make_initializable_iterator()
         next_element = iterator.get_next()
         with tf.Session() as sess:
             sess.run(iterator.initializer, feed_dict={features_placeholder: self._images})
-            # batch = tf.cast(sess.run(next_element), tf.float32)
             batch = sess.run(next_element)
         return batch
 
