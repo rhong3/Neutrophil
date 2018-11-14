@@ -122,20 +122,18 @@ hm_B = np.full((n_x, n_y), 0)
 print(np.shape(opt))
 
 poscsv = joined.loc[joined['Prediction'] == 1]
-poscsv['X_pos'] = poscsv['X_pos'].astype(np.uint8)
-poscsv['Y_pos'] = poscsv['Y_pos'].astype(np.uint8)
 for index, row in poscsv.iterrows():
-    opt[row["X_pos"], row["Y_pos"]] = 255
-    hm_R[row["X_pos"], row["Y_pos"]] = 255
-    hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["pos_score"]-0.5)*2)*255)
-    hm_B[row["X_pos"], row["Y_pos"]] = int((1 - (row["pos_score"] - 0.5) * 2) * 255)
+    opt[int(row["X_pos"]), int(row["Y_pos"])] = 255
+    hm_R[int(row["X_pos"]), int(row["Y_pos"])] = 255
+    hm_G[int(row["X_pos"]), int(row["Y_pos"])] = int((1-(row["pos_score"]-0.5)*2)*255)
+    hm_B[int(row["X_pos"]), int(row["Y_pos"])] = int((1 - (row["pos_score"] - 0.5) * 2) * 255)
 
 negcsv = joined.loc[joined['Prediction'] == 0]
 for index, row in negcsv.iterrows():
-    opt[row["X_pos"], row["Y_pos"]] = 255
-    hm_B[row["X_pos"], row["Y_pos"]] = 255
-    hm_G[row["X_pos"], row["Y_pos"]] = int((1-(row["neg_score"]-0.5)*2)*255)
-    hm_R[row["X_pos"], row["Y_pos"]] = int((1 - (row["neg_score"] - 0.5) * 2) * 255)
+    opt[int(row["X_pos"]), int(row["Y_pos"])] = 255
+    hm_B[int(row["X_pos"]), int(row["Y_pos"])] = 255
+    hm_G[int(row["X_pos"]), int(row["Y_pos"])] = int((1-(row["neg_score"]-0.5)*2)*255)
+    hm_R[int(row["X_pos"]), int(row["Y_pos"])] = int((1 - (row["neg_score"] - 0.5) * 2) * 255)
 
 opt = opt.repeat(5, axis=0).repeat(5, axis=1)
 opt = mph.remove_small_objects(opt.astype(bool), min_size=500, connectivity=2).astype(np.uint8)
