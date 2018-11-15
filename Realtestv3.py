@@ -167,9 +167,9 @@ overlay = ori_img * 0.65 + hm * 0.35
 cv2.imwrite(out_dir+'/Overlay.png', overlay)
 
 
-# Time measure tool
-start_time = time.time()
-print("--- %s seconds ---" % (time.time() - start_time))
+# # Time measure tool
+# start_time = time.time()
+# print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
