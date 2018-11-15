@@ -153,26 +153,12 @@ class INCEPTION():
         print("------- Testing end: {} -------\n".format(now), flush=True)
 
     def get_global_step(self, X):
-        x_list, y_list, _ = X.next_batch()
+        x_list, y_list = X.next_batch()
         with tf.Session() as sess:
-            # Initialize all global and local variables
-            init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-            sess.run(init_op)
-            # Create a coordinator and run all QueueRunner objects
-            coord = tf.train.Coordinator()
-            threads = tf.train.start_queue_runners(coord=coord)
             x, y = sess.run([x_list, y_list])
             x = x.astype(np.uint8)
 
-            # Stop the threads
-            coord.request_stop()
-
-            # Wait for threads to stop
-            coord.join(threads)
-            sess.close()
-
-        feed_dict = {self.x_in: x, self.y_in: y,
-                     self.dropout_: self.dropout}
+        feed_dict = {self.x_in: x, self.y_in: y}
 
         fetches = [self.global_step]
 
@@ -180,7 +166,7 @@ class INCEPTION():
 
         return i
 
-    def train(self, X, dirr, max_iter=np.inf, max_epochs=np.inf, cross_validate=True,
+    def train(self, X, ct, bs, dirr, max_iter=np.inf, max_epochs=np.inf, cross_validate=True,
               verbose=True, save=True, outdir="./out"):
 
         if save:
@@ -191,17 +177,10 @@ class INCEPTION():
             now = datetime.now().isoformat()[11:]
             print("------- Training begin: {} -------\n".format(now), flush=True)
 
-            x_list, y_list, nums = X.next_batch()
             with tf.Session() as sessa:
-                # Initialize all global and local variables
-                init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-                sessa.run(init_op)
-                # Create a coordinator and run all QueueRunner objects
-                coord = tf.train.Coordinator()
-                threads = tf.train.start_queue_runners(coord=coord, sess=sessa)
-
                 while True:
                     try:
+                        x_list, y_list = X.next_batch()
                         x, y = sessa.run([x_list, y_list])
                         x = x.astype(np.uint8)
 
@@ -265,15 +244,8 @@ class INCEPTION():
 
 
                     except tf.errors.OutOfRangeError:
-                        # Stop the threads
-                        coord.request_stop()
-
-                        # Wait for threads to stop
-                        coord.join(threads)
-                        sessa.close()
-
                         print("final avg cost (@ step {} = epoch {}): {}".format(
-                            i, np.around(i / nums * self.batch_size), err_train / i), flush=True)
+                            i, np.around(i / ct * bs), err_train / i), flush=True)
 
                         now = datetime.now().isoformat()[11:]
                         print("------- Training end: {} -------\n".format(now), flush=True)
@@ -296,7 +268,7 @@ class INCEPTION():
         except(KeyboardInterrupt):
 
             print("final avg cost (@ step {} = epoch {}): {}".format(
-                i, np.around(i / nums * self.batch_size), err_train / i), flush=True)
+                i, np.around(i / ct * bs), err_train / i), flush=True)
 
             now = datetime.now().isoformat()[11:]
             print("------- Training end: {} -------\n".format(now), flush=True)

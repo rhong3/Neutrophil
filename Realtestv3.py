@@ -73,7 +73,7 @@ except(FileExistsError):
 
 
 def loader(images, bs, ct):
-    dataset = data_input.DataSet(images, bs, ct)
+    dataset = data_input.DataSet(bs, ct, images=images)
     return dataset
 
 
