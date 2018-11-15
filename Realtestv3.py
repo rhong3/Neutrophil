@@ -13,11 +13,11 @@ import os
 import sys
 import numpy as np
 import data_input
-import cnnm2
-import cnng2
-import cnni2
-import cnnt2
-import cnnir12
+import cnnm3
+import cnng3
+import cnni3
+import cnnt3
+import cnnir13
 import cnnir23
 import pandas as pd
 import cv2

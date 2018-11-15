@@ -7,7 +7,7 @@ import sys
 
 import numpy as np
 import tensorflow as tf
-import inception_resnet_v2
+import inception_resnet_v1
 import Accessory as ac
 
 slim = tf.contrib.slim
@@ -15,7 +15,7 @@ slim = tf.contrib.slim
 
 class INCEPTION():
     """
-    Use the Inception-ResV2 architecture
+    Use the Inception-ResV1 architecture
 
     """
 
@@ -82,13 +82,12 @@ class INCEPTION():
 
         is_train = tf.placeholder_with_default(True, shape=[], name="is_train")
 
-        logits, nett, ww = inception_resnet_v2.inception_resnet_v2(x_in_reshape,
+        logits, nett, ww = inception_resnet_v1.inception_resnet_v1(x_in_reshape,
                                                                    num_classes=2,
                                                                    is_training=is_train,
                                                                    dropout_keep_prob=dropout,
                                                                    reuse=None,
-                                                                   create_aux_logits=True,
-                                                                   scope='InceptionRes2')
+                                                                   scope='InceptionRes1')
 
         pred = tf.nn.softmax(logits, name="prediction")
 
@@ -97,7 +96,7 @@ class INCEPTION():
         pred_cost = tf.losses.softmax_cross_entropy(
             onehot_labels=onehot_labels, logits=logits)
 
-        tf.summary.scalar("InceptionRes2_cost", pred_cost)
+        tf.summary.scalar("InceptionRes1_cost", pred_cost)
 
         train_op = tf.contrib.layers.optimize_loss(
             loss=pred_cost,
@@ -153,7 +152,6 @@ class INCEPTION():
             ac.realout(pdx, dirr, 'Test')
         now = datetime.now().isoformat()[11:]
         print("------- Testing end: {} -------\n".format(now), flush=True)
-
 
     def get_global_step(self, X):
         x_list, y_list, _ = X.next_batch()
@@ -283,7 +281,7 @@ class INCEPTION():
 
                         if save:
                             outfile = os.path.join(os.path.abspath(outdir),
-                                                   "inceptionres2_{}".format("_".join(['dropout', str(self.dropout)])))
+                                                   "inceptionres1_{}".format("_".join(['dropout', str(self.dropout)])))
                             saver.save(self.sesh, outfile, global_step=None)
                         try:
                             self.train_logger.flush()
@@ -305,7 +303,7 @@ class INCEPTION():
             print("------- Training end: {} -------\n".format(now), flush=True)
 
             if save:
-                outfile = os.path.join(os.path.abspath(outdir), "inceptionres2_{}".format("_".join(['dropout', str(self.dropout)])))
+                outfile = os.path.join(os.path.abspath(outdir), "inceptionres1_{}".format("_".join(['dropout', str(self.dropout)])))
                 saver.save(self.sesh, outfile, global_step=None)
             try:
                 self.train_logger.flush()
