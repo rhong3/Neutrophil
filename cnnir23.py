@@ -157,9 +157,8 @@ class INCEPTION():
 
     def get_global_step(self, X):
         x_list, y_list = X.next_batch()
-        with tf.Session() as sess:
-            x, y = sess.run([x_list, y_list])
-            x = x.astype(np.uint8)
+        x = x_list.astype(np.uint8)
+        y = y_list.astype(np.uint8)
 
         feed_dict = {self.x_in: x, self.y_in: y}
 
@@ -180,93 +179,88 @@ class INCEPTION():
             now = datetime.now().isoformat()[11:]
             print("------- Training begin: {} -------\n".format(now), flush=True)
 
-            with tf.Session() as sessa:
-                while True:
+            while True:
+                try:
+                    x_list, y_list = X.next_batch()
+                    x = x_list.astype(np.uint8)
+                    y = y_list.astype(np.uint8)
+
+                    feed_dict = {self.x_in: x, self.y_in: y,
+                                 self.dropout_: self.dropout}
+
+                    fetches = [self.merged_summary, self.logits, self.pred,
+                               self.pred_cost, self.global_step, self.train_op]
+
+                    summary, logits, pred, cost, i, _ = self.sesh.run(fetches, feed_dict)
+
+                    self.train_logger.add_summary(summary, i)
+                    err_train += cost
+
+                    if i % 1000 == 0 and verbose:
+                        print("round {} --> cost: ".format(i), cost, flush=True)
+
+                        if cross_validate:
+                            xv_list, yv_list = X.next_batch()
+                            xv = xv_list.astype(np.uint8)
+                            yv = yv_list.astype(np.uint8)
+
+                            feed_dict = {self.x_in: xv, self.y_in: yv}
+                            fetches = [self.pred_cost, self.merged_summary]
+                            valid_cost, valid_summary = self.sesh.run(fetches, feed_dict)
+
+                            self.valid_logger.add_summary(valid_summary, i)
+
+                            print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
+
+                    if i == max_iter-int(i/1000)-2 and verbose:  # and i >= 10000:
+
+                        if cross_validate:
+                            now = datetime.now().isoformat()[11:]
+                            print("------- Validation begin: {} -------\n".format(now), flush=True)
+                            xv_list, yv_list = X.next_batch()
+                            xv = xv_list.astype(np.uint8)
+                            yv = yv_list.astype(np.uint8)
+
+                            feed_dict = {self.x_in: xv, self.y_in: yv}
+                            fetches = [self.pred_cost, self.merged_summary, self.pred, self.net, self.w]
+                            valid_cost, valid_summary, pred, net, w = self.sesh.run(fetches, feed_dict)
+
+                            self.valid_logger.add_summary(valid_summary, i)
+
+                            print("round {} --> Last CV cost: ".format(i), valid_cost, flush=True)
+                            ac.CAM(net, w, pred, xv, yv, dirr, 'Validation')
+                            ac.metrics(pred, yv, dirr, 'Validation')
+                            now = datetime.now().isoformat()[11:]
+                            print("------- Validation end: {} -------\n".format(now), flush=True)
+
+
+                    # if i%50000 == 0 and save:
+                    #     interfile=os.path.join(os.path.abspath(outdir), "{}_cnn_{}".format(
+                    #             self.datetime, "_".join(map(str, self.input_dim))))
+                    #     saver.save(self.sesh, interfile, global_step=self.step)
+
+
+                except tf.errors.OutOfRangeError:
+                    print("final avg cost (@ step {} = epoch {}): {}".format(
+                        i+1, np.around(i / ct * bs), err_train / i), flush=True)
+
+                    now = datetime.now().isoformat()[11:]
+                    print("------- Training end: {} -------\n".format(now), flush=True)
+
+                    if save:
+                        outfile = os.path.join(os.path.abspath(outdir),
+                                               "inceptionres2_{}".format("_".join(['dropout', str(self.dropout)])))
+                        saver.save(self.sesh, outfile, global_step=None)
                     try:
-                        x_list, y_list = X.next_batch()
-                        x, y = sessa.run([x_list, y_list])
-                        x = x.astype(np.uint8)
+                        self.train_logger.flush()
+                        self.train_logger.close()
+                        self.valid_logger.flush()
+                        self.valid_logger.close()
 
-                        feed_dict = {self.x_in: x, self.y_in: y,
-                                     self.dropout_: self.dropout}
+                    except(AttributeError):  # not logging
+                        print('Not logging', flush=True)
 
-                        fetches = [self.merged_summary, self.logits, self.pred,
-                                   self.pred_cost, self.global_step, self.train_op]
-
-                        summary, logits, pred, cost, i, _ = self.sesh.run(fetches, feed_dict)
-
-                        self.train_logger.add_summary(summary, i)
-                        err_train += cost
-
-                        if i % 1000 == 0 and verbose:
-                            print("round {} --> cost: ".format(i), cost, flush=True)
-
-                        elif i == max_iter and verbose:
-                            print("round {} --> cost: ".format(i), cost, flush=True)
-
-
-                        if i % 1000 == 0 and verbose:  # and i >= 10000:
-
-                            if cross_validate:
-                                xv, yv = sessa.run([x_list, y_list])
-                                xv = xv.astype(np.uint8)
-
-                                feed_dict = {self.x_in: xv, self.y_in: yv}
-                                fetches = [self.pred_cost, self.merged_summary]
-                                valid_cost, valid_summary = self.sesh.run(fetches, feed_dict)
-
-                                self.valid_logger.add_summary(valid_summary, i)
-
-                                print("round {} --> CV cost: ".format(i), valid_cost, flush=True)
-
-                        if i == max_iter-int(i/1000)-2 and verbose:  # and i >= 10000:
-
-                            if cross_validate:
-                                now = datetime.now().isoformat()[11:]
-                                print("------- Validation begin: {} -------\n".format(now), flush=True)
-                                xv, yv = sessa.run([x_list, y_list])
-                                xv = xv.astype(np.uint8)
-
-                                feed_dict = {self.x_in: xv, self.y_in: yv}
-                                fetches = [self.pred_cost, self.merged_summary, self.pred, self.net, self.w]
-                                valid_cost, valid_summary, pred, net, w = self.sesh.run(fetches, feed_dict)
-
-                                self.valid_logger.add_summary(valid_summary, i)
-
-                                print("round {} --> Last CV cost: ".format(i), valid_cost, flush=True)
-                                ac.CAM(net, w, pred, xv, yv, dirr, 'Validation')
-                                ac.metrics(pred, yv, dirr, 'Validation')
-                                now = datetime.now().isoformat()[11:]
-                                print("------- Validation end: {} -------\n".format(now), flush=True)
-
-
-                        # if i%50000 == 0 and save:
-                        #     interfile=os.path.join(os.path.abspath(outdir), "{}_cnn_{}".format(
-                        #             self.datetime, "_".join(map(str, self.input_dim))))
-                        #     saver.save(self.sesh, interfile, global_step=self.step)
-
-
-                    except tf.errors.OutOfRangeError:
-                        print("final avg cost (@ step {} = epoch {}): {}".format(
-                            i, np.around(i / ct * bs), err_train / i), flush=True)
-
-                        now = datetime.now().isoformat()[11:]
-                        print("------- Training end: {} -------\n".format(now), flush=True)
-
-                        if save:
-                            outfile = os.path.join(os.path.abspath(outdir),
-                                                   "inceptionres2_{}".format("_".join(['dropout', str(self.dropout)])))
-                            saver.save(self.sesh, outfile, global_step=None)
-                        try:
-                            self.train_logger.flush()
-                            self.train_logger.close()
-                            self.valid_logger.flush()
-                            self.valid_logger.close()
-
-                        except(AttributeError):  # not logging
-                            print('Not logging', flush=True)
-
-                        break
+                    break
 
         except(KeyboardInterrupt):
 

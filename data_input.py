@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+import numpy as np
 
 
 class DataSet(object):
@@ -23,7 +24,8 @@ class DataSet(object):
             features={self._mode + '/image': tf.FixedLenFeature([], tf.string),
                       self._mode + '/label': tf.FixedLenFeature([], tf.int64), })
 
-        image = tf.decode_raw(features[self._mode + '/image'], tf.uint8)
+        image = tf.decode_raw(features[self._mode + '/image'], tf.float32)
+        image = tf.reshape(image, [self._batchsize, 299, 299, 3])
 
         # Convert label from a scalar uint8 tensor to an int32 scalar.
         label = tf.cast(features[self._mode + '/label'], tf.int32)
@@ -32,7 +34,7 @@ class DataSet(object):
     def next_batch(self, Not_Realtest=True):
         batch_size = self._batchsize
         if Not_Realtest:
-            filenames = tf.placeholder(tf.string, shape=[None])
+            filenames = tf.placeholder(tf.string, shape=None)
             dataset = tf.data.TFRecordDataset(filenames)
             dataset = dataset.repeat(self._epochs)
             batched_dataset = dataset.batch(batch_size, drop_remainder=True)
@@ -42,6 +44,7 @@ class DataSet(object):
             with tf.Session() as sess:
                 sess.run(iterator.initializer, feed_dict={filenames: self._filename})
                 batch = sess.run(next_element)
+
         else:
             features_placeholder = tf.placeholder(self._images.dtype, self._images.shape)
             dataset = tf.data.Dataset.from_tensor_slices(features_placeholder)
