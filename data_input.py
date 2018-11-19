@@ -22,7 +22,7 @@ class DataSet(object):
             features={self._mode + '/image': tf.FixedLenFeature([], tf.string),
                       self._mode + '/label': tf.FixedLenFeature([], tf.int64), })
 
-        image = tf.decode_raw(features[self._mode + '/image'], tf.float32)
+        image = tf.decode_raw(features[self._mode + '/image'], tf.int32)
         image = tf.reshape(image, [self._batchsize, 299, 299, 3])
 
         # Convert label from a scalar uint8 tensor to an int32 scalar.

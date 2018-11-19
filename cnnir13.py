@@ -154,9 +154,7 @@ class INCEPTION():
         print("------- Testing end: {} -------\n".format(now), flush=True)
 
     def get_global_step(self, X):
-        x_list, y_list = X.next_batch()
-        x = x_list.astype(np.uint8)
-        y = y_list.astype(np.uint8)
+        x, y = X.next_batch()
 
         feed_dict = {self.x_in: x, self.y_in: y}
 
@@ -179,9 +177,7 @@ class INCEPTION():
 
             while True:
                 try:
-                    x_list, y_list = X.next_batch()
-                    x = x_list.astype(np.uint8)
-                    y = y_list.astype(np.uint8)
+                    x, y = X.next_batch()
 
                     feed_dict = {self.x_in: x, self.y_in: y,
                                  self.dropout_: self.dropout}
@@ -198,9 +194,7 @@ class INCEPTION():
                         print("round {} --> cost: ".format(i), cost, flush=True)
 
                         if cross_validate:
-                            xv_list, yv_list = X.next_batch()
-                            xv = xv_list.astype(np.uint8)
-                            yv = yv_list.astype(np.uint8)
+                            xv, yv = X.next_batch()
 
                             feed_dict = {self.x_in: xv, self.y_in: yv}
                             fetches = [self.pred_cost, self.merged_summary]
@@ -215,9 +209,7 @@ class INCEPTION():
                         if cross_validate:
                             now = datetime.now().isoformat()[11:]
                             print("------- Validation begin: {} -------\n".format(now), flush=True)
-                            xv_list, yv_list = X.next_batch()
-                            xv = xv_list.astype(np.uint8)
-                            yv = yv_list.astype(np.uint8)
+                            xv, yv = X.next_batch()
 
                             feed_dict = {self.x_in: xv, self.y_in: yv}
                             fetches = [self.pred_cost, self.merged_summary, self.pred, self.net, self.w]
@@ -281,6 +273,9 @@ class INCEPTION():
                 print('Not logging', flush=True)
 
             sys.exit(0)
+
+
+
 
 
 
