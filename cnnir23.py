@@ -4,7 +4,7 @@
 from datetime import datetime
 import os
 import sys
-
+import time
 import numpy as np
 import tensorflow as tf
 import inception_resnet_v2
@@ -168,7 +168,7 @@ class INCEPTION():
 
     def train(self, X, ct, bs, dirr, max_iter=np.inf, max_epochs=np.inf, cross_validate=True,
               verbose=True, save=True, outdir="./out"):
-
+        start_time = time.time()
         if save:
             saver = tf.train.Saver(tf.global_variables(), max_to_keep=None)
 
@@ -225,7 +225,27 @@ class INCEPTION():
                             now = datetime.now().isoformat()[11:]
                             print("------- Validation end: {} -------\n".format(now), flush=True)
 
+                    if i == max_iter and verbose:
+                        print("final avg cost (@ step {} = epoch {}): {}".format(
+                            i + 1, np.around(i / ct * bs), err_train / i), flush=True)
 
+                        now = datetime.now().isoformat()[11:]
+                        print("------- Training end: {} -------\n".format(now), flush=True)
+
+                        if save:
+                            outfile = os.path.join(os.path.abspath(outdir),
+                                                   "inceptionres2_{}".format("_".join(['dropout', str(self.dropout)])))
+                            saver.save(self.sesh, outfile, global_step=None)
+                        try:
+                            self.train_logger.flush()
+                            self.train_logger.close()
+                            self.valid_logger.flush()
+                            self.valid_logger.close()
+
+                        except(AttributeError):  # not logging
+                            print('Not logging', flush=True)
+
+                        break
                     # if i%50000 == 0 and save:
                     #     interfile=os.path.join(os.path.abspath(outdir), "{}_cnn_{}".format(
                     #             self.datetime, "_".join(map(str, self.input_dim))))
@@ -253,6 +273,7 @@ class INCEPTION():
                         print('Not logging', flush=True)
 
                     break
+            print("--- %s seconds ---" % (time.time() - start_time))
 
         except(KeyboardInterrupt):
 
