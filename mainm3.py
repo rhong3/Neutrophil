@@ -184,7 +184,7 @@ def main(trc, tec, to_reload=None, test=None):
         if trc <= 2 * bs:
             print("Not enough training images!")
         else:
-            m.train(HE, trc, bs, dirr=dirr, max_iter=itt, max_epochs=MAX_EPOCHS, verbose=True, save=True, outdir=METAGRAPH_DIR)
+            m.train(HE, trc, bs, dirr=dirr, max_iter=itt, verbose=True, save=True, outdir=METAGRAPH_DIR)
         if tec >= 1000:
             HE = tfreloader('test', 1, 1000, trc, tec)
             m.inference(HE, dirr)
@@ -217,7 +217,7 @@ def main(trc, tec, to_reload=None, test=None):
         if trc <= 2*bs:
             print("Not enough training images!")
         else:
-            m.train(HE, trc, bs, dirr=dirr, max_iter=itt, max_epochs=MAX_EPOCHS, verbose=True, save=True, outdir=METAGRAPH_DIR)
+            m.train(HE, trc, bs, dirr=dirr, max_iter=itt, verbose=True, save=True, outdir=METAGRAPH_DIR)
         if tec >= 1000:
             HE = tfreloader('test', 1, 1000, trc, tec)
             m.inference(HE, dirr)
