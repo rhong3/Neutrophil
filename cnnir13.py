@@ -118,11 +118,12 @@ class INCEPTION():
         yl = []
         if Not_Realtest:
             itr, file, ph = X.data()
+            next_element = itr.get_next()
             with tf.Session() as sessa:
                 sessa.run(itr.initializer, feed_dict={ph: file})
                 while True:
                     try:
-                        x, y = sessa.run(itr.get_next())
+                        x, y = sessa.run(next_element)
                         feed_dict = {self.x_in: x, self.is_train: train_status}
                         fetches = [self.pred, self.net, self.w]
                         pred, net, w = self.sesh.run(fetches, feed_dict)
@@ -139,11 +140,12 @@ class INCEPTION():
                         break
         else:
             itr, img, ph = X.data()
+            next_element = itr.get_next()
             with tf.Session() as sessa:
                 sessa.run(itr.initializer, feed_dict={ph: img})
                 while True:
                     try:
-                        x = sessa.run(itr.get_next())
+                        x = sessa.run(next_element)
                         feed_dict = {self.x_in: x, self.is_train: train_status}
                         fetches = [self.pred, self.net, self.w]
                         pred, net, w = self.sesh.run(fetches, feed_dict)
@@ -162,9 +164,10 @@ class INCEPTION():
 
     def get_global_step(self, X):
         itr, file, ph = X.data()
+        next_element = itr.get_next()
         with tf.Session() as sessa:
             sessa.run(itr.initializer, feed_dict={ph: file})
-            x, y = sessa.run(itr.get_next())
+            x, y = sessa.run(next_element)
 
             feed_dict = {self.x_in: x, self.y_in: y}
 
@@ -184,11 +187,12 @@ class INCEPTION():
             now = datetime.now().isoformat()[11:]
             print("------- Training begin: {} -------\n".format(now), flush=True)
             itr, file, ph = X.data()
+            next_element = itr.get_next()
             with tf.Session() as sessa:
                 sessa.run(itr.initializer, feed_dict={ph: file})
                 while True:
                     try:
-                        x, y = sessa.run(itr.get_next())
+                        x, y = sessa.run(next_element)
 
                         feed_dict = {self.x_in: x, self.y_in: y,
                                      self.dropout_: self.dropout}
@@ -205,7 +209,7 @@ class INCEPTION():
                             print("round {} --> cost: ".format(i), cost, flush=True)
 
                             if cross_validate:
-                                xv, yv = sessa.run(itr.get_next())
+                                xv, yv = sessa.run(next_element)
 
                                 feed_dict = {self.x_in: xv, self.y_in: yv}
                                 fetches = [self.pred_cost, self.merged_summary]
@@ -220,7 +224,7 @@ class INCEPTION():
                             if cross_validate:
                                 now = datetime.now().isoformat()[11:]
                                 print("------- Validation begin: {} -------\n".format(now), flush=True)
-                                xv, yv = sessa.run(itr.get_next())
+                                xv, yv = sessa.run(next_element)
 
                                 feed_dict = {self.x_in: xv, self.y_in: yv}
                                 fetches = [self.pred_cost, self.merged_summary, self.pred, self.net, self.w]
