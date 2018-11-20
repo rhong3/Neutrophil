@@ -154,10 +154,10 @@ def main(trc, tec, to_reload=None, test=None):
         print("Loaded! Ready for test!", flush=True)
         if tec >= 1000:
             HE = tfreloader('test', 1, 1000, trc, tec)
-            m.inference(HE, tec, 1000, dirr)
+            m.inference(HE, dirr)
         elif 100 < tec < 1000:
             HE = tfreloader('test', 1, tec, trc, tec)
-            m.inference(HE, tec, tec, dirr)
+            m.inference(HE, dirr)
         else:
             print("Not enough testing images!")
 
@@ -187,10 +187,10 @@ def main(trc, tec, to_reload=None, test=None):
             m.train(HE, trc, bs, dirr=dirr, max_iter=itt, max_epochs=MAX_EPOCHS, verbose=True, save=True, outdir=METAGRAPH_DIR)
         if tec >= 1000:
             HE = tfreloader('test', 1, 1000, trc, tec)
-            m.inference(HE, tec, 1000, dirr)
+            m.inference(HE, dirr)
         elif 100 < tec < 1000:
             HE = tfreloader('test', 1, tec, trc, tec)
-            m.inference(HE, tec, tec, dirr)
+            m.inference(HE, dirr)
         else:
             print("Not enough testing images!")
 
@@ -220,10 +220,10 @@ def main(trc, tec, to_reload=None, test=None):
             m.train(HE, trc, bs, dirr=dirr, max_iter=itt, max_epochs=MAX_EPOCHS, verbose=True, save=True, outdir=METAGRAPH_DIR)
         if tec >= 1000:
             HE = tfreloader('test', 1, 1000, trc, tec)
-            m.inference(HE, tec, 1000, dirr)
+            m.inference(HE, dirr)
         elif 100 < tec < 1000:
             HE = tfreloader('test', 1, tec, trc, tec)
-            m.inference(HE, tec, tec, dirr)
+            m.inference(HE, dirr)
         else:
             print("Not enough testing images!")
 
