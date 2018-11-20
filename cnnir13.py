@@ -205,7 +205,7 @@ class INCEPTION():
                             print("round {} --> cost: ".format(i), cost, flush=True)
 
                             if cross_validate:
-                                xv, yv = X.next_batch()
+                                xv, yv = sessa.run(itr.get_next())
 
                                 feed_dict = {self.x_in: xv, self.y_in: yv}
                                 fetches = [self.pred_cost, self.merged_summary]
@@ -220,7 +220,7 @@ class INCEPTION():
                             if cross_validate:
                                 now = datetime.now().isoformat()[11:]
                                 print("------- Validation begin: {} -------\n".format(now), flush=True)
-                                xv, yv = X.next_batch()
+                                xv, yv = sessa.run(itr.get_next())
 
                                 feed_dict = {self.x_in: xv, self.y_in: yv}
                                 fetches = [self.pred_cost, self.merged_summary, self.pred, self.net, self.w]
