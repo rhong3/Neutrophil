@@ -10,8 +10,6 @@ import tensorflow as tf
 import inception_resnet_v1
 import Accessory as ac
 
-slim = tf.contrib.slim
-
 
 class INCEPTION():
     """
