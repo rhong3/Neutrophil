@@ -38,7 +38,6 @@ class DataSet(object):
             dataset = dataset.repeat(ep)
             batched_dataset = dataset.batch(batch_size, drop_remainder=True)
             batched_dataset = batched_dataset.map(self.decode)
-            batched_dataset = batched_dataset.shuffle(500000)
             iterator = batched_dataset.make_initializable_iterator()
             # next_element = iterator.get_next()
             # with tf.Session() as sess:
