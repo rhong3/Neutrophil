@@ -96,7 +96,7 @@ def test(images, count, bs, to_reload=None):
 
     print("Loaded! Ready for test!")
     HE = loader(images, bs, count)
-    m.inference(HE, count, bs, dirr, Not_Realtest=False)
+    m.inference(HE, dirr, Not_Realtest=False)
 
 # cut tiles with coordinates in the name (exclude white)
 start_time = time.time()
