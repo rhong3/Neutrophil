@@ -10,6 +10,7 @@ import tensorflow as tf
 import GoogleNet
 import Accessory as ac
 
+slim = tf.contrib.slim
 
 class INCEPTION():
     """
