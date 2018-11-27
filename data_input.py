@@ -39,10 +39,7 @@ class DataSet(object):
             batched_dataset = dataset.batch(batch_size, drop_remainder=True)
             batched_dataset = batched_dataset.map(self.decode)
             iterator = batched_dataset.make_initializable_iterator()
-            # next_element = iterator.get_next()
-            # with tf.Session() as sess:
-            #     sess.run(iterator.initializer, feed_dict={filenames: self._filename})
-            #     batch = sess.run(next_element)
+
             return iterator, self._filename, filenames
         else:
             features_placeholder = tf.placeholder(self._images.dtype, self._images.shape)
@@ -50,10 +47,7 @@ class DataSet(object):
             dataset = dataset.repeat(ep)
             batched_dataset = dataset.batch(batch_size, drop_remainder=False)
             iterator = batched_dataset.make_initializable_iterator()
-            # next_element = iterator.get_next()
-            # with tf.Session() as sess:
-            #     sess.run(iterator.initializer, feed_dict={features_placeholder: self._images})
-            #     batch = sess.run(next_element)
+
             return iterator, self._images, features_placeholder
 
     @property
