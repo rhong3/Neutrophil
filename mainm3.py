@@ -244,10 +244,13 @@ if __name__ == "__main__":
         except(FileExistsError):
             pass
 
-    _, _, _, tes, trs = Sample_prep.samplesum()
-    tes.to_csv(img_dir+'/te_sample.csv', index=False)
-    trs.to_csv(img_dir+'/tr_sample.csv', index=False)
-    trc, tec = counters(img_dir)
+    try:
+        trc, tec = counters(img_dir)
+    except FileNotFoundError:
+        _, _, _, tes, trs = Sample_prep.samplesum()
+        tes.to_csv(img_dir+'/te_sample.csv', index=False)
+        trs.to_csv(img_dir+'/tr_sample.csv', index=False)
+        trc, tec = counters(img_dir)
 
     try:
         modeltoload = sys.argv[5]
