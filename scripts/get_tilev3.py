@@ -98,7 +98,6 @@ def tile(image_file, outdir, path_to_slide = "../Neutrophil/"):
     tempimglist = None
     imglist = np.asarray(imglist)
 
-
     return n_x, n_y, lowres, residue_x, residue_y, imglist, ct
 
 

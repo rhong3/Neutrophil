@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
+
 class DataSet(object):
 
     def __init__(self, bs, count, ep=1, images = None, mode = None, filename = None):
