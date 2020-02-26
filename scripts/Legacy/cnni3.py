@@ -41,8 +41,6 @@ class INCEPTION():
             tf.train.import_meta_graph(meta_dir + '/' + model_name +'.meta').restore(
                 self.sesh, meta_dir + '/' + model_name)
             handles = self.sesh.graph.get_collection(INCEPTION.RESTORE_KEY)
-
-
         else:  # build graph from scratch
             self.datetime = datetime.now().strftime(r"%y%m%d_%H%M")
             handles = self._buildGraph()

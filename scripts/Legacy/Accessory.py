@@ -267,3 +267,35 @@ def CAM_R(net, w, pred, x, path, name, rd=0):
             # cv2.imwrite(imname1, a)
             # cv2.imwrite(imname2, b)
             cv2.imwrite(imname3, full)
+
+
+# Output activation for tSNE
+def tSNE_prep(flatnet, ori_test, y, pred, path, pmd):
+    # format clean up
+    tl = np.asmatrix(y)
+    tl = tl.argmax(axis=1).astype('uint8')
+    pdxt = np.asmatrix(pred)
+    prl = pdxt.argmax(axis=1).astype('uint8')
+    prl = pd.DataFrame(prl, columns=['Prediction'])
+    print(np.shape(flatnet))
+    act = pd.DataFrame(np.asmatrix(flatnet))
+    if pmd == 'subtype':
+        outt = pd.DataFrame(pdxt, columns=['POLE_score', 'MSI_score', 'Endometrioid_score', 'Serous-like_score'])
+    elif pmd == 'histology':
+        outt = pd.DataFrame(pdxt, columns=['Endometrioid_score', 'Serous_score'])
+    elif pmd == 'MSIst':
+        outt = pd.DataFrame(pdxt, columns=['MSS_score', 'MSI-H_score'])
+    else:
+        outt = pd.DataFrame(pdxt, columns=['NEG_score', 'POS_score'])
+    outtlt = pd.DataFrame(tl, columns=['True_label'])
+    outt.reset_index(drop=True, inplace=True)
+    prl.reset_index(drop=True, inplace=True)
+    outtlt.reset_index(drop=True, inplace=True)
+    out = pd.concat([outt, prl, outtlt], axis=1)
+    ori_test.reset_index(drop=True, inplace=True)
+    out.reset_index(drop=True, inplace=True)
+    act.reset_index(drop=True, inplace=True)
+    out = pd.concat([ori_test, out, act], axis=1)
+    if out.shape[0] > 30000:
+        out = out.sample(30000, replace=False)
+    out.to_csv("../Results/{}/out/For_tSNE.csv".format(path), index=False)
