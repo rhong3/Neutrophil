@@ -14,15 +14,13 @@ import tensorflow as tf
 
 class DataSet(object):
     # bs is batch size; ep is epoch; images are images; mode is test/train; filename is tfrecords
-    def __init__(self, bs, count, ep=1, cls=2, images=None, mode=None, filename=None):
+    def __init__(self, bs, ep=1, images=None, mode=None, filename=None):
         self._batchsize = bs
         self._index_in_epoch = 0
-        self._num_examples = count
         self._images = images
         self._mode = mode
         self._filename = filename
         self._epochs = ep
-        self._classes = cls
 
     # decoding tfrecords; return images and labels
     def decode(self, serialized_example):
@@ -63,14 +61,14 @@ class DataSet(object):
         images = tf.image.random_contrast(images, 0.9, 1.1)
         images = tf.image.random_saturation(images, 0.9, 1.1)
 
-        labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=self._classes)
+        labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=2)
 
         return images, labels
 
     # onehot encoding only; for test set
     def onehot_only(self, images, labels):
         with tf.name_scope('onehot_only'):
-            labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=self._classes)
+            labels = tf.one_hot(indices=tf.cast(labels, tf.int32), depth=2)
         return images, labels
 
     # dataset preparation; batching; Real test or not; train or test
@@ -101,6 +99,3 @@ class DataSet(object):
     def images(self):
         return self._images
 
-    @property
-    def num_examples(self):
-        return self._num_examples

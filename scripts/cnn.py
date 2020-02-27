@@ -21,7 +21,7 @@ class INCEPTION:
         "batch_size": 128,
         "dropout": 0.5,
         "learning_rate": 1E-3,
-        "classes": 4,
+        "classes": 2,
         "sup": False
     }
 
@@ -29,7 +29,7 @@ class INCEPTION:
 
     def __init__(self, input_dim, d_hyperparams={},
                  save_graph_def=True, meta_graph=None,
-                 log_dir="./log", meta_dir="./meta", model='I1', weights = tf.constant([1., 1., 1., 1.])):
+                 log_dir="./log", meta_dir="./meta", model='I1', weights=tf.constant([1., 1., 1., 1.])):
 
         self.input_dim = input_dim
         self.__dict__.update(INCEPTION.DEFAULTS, **d_hyperparams)
