@@ -101,10 +101,10 @@ def py_map2jpg(imgmap, rang, colorMap):
     return cv2.applyColorMap(heatmap_x, cv2.COLORMAP_JET)
 
 
-def CAM(net, w, pred, x, y, path, name, rd=0):
-    DIR = "../Neutrophil/{}/out/{}_posimg".format(path, name)
-    DIRR = "../Neutrophil/{}/out/{}_negimg".format(path, name)
-    rd = rd*1000
+def CAM(net, w, pred, x, y, path, name, bs, rd=0):
+    DIR = "../Results/{}/out/{}_posimg".format(path, name)
+    DIRR = "../Results/{}/out/{}_negimg".format(path, name)
+    rd = rd*bs
 
     try:
         os.mkdir(DIR)
@@ -122,101 +122,53 @@ def CAM(net, w, pred, x, y, path, name, rd=0):
 
     for ij in range(len(y)):
         id = str(ij + rd)
-        if prl[ij] == 0:
-            if y[ij] == 0:
-                ddt = 'Correct'
-            else:
-                ddt = 'Wrong'
-
-            weights_LR = w
-            activation_lastconv = np.array([net[ij]])
-            weights_LR = weights_LR.T
-            activation_lastconv = activation_lastconv.T
-
-            topNum = 1  # generate heatmap for top X prediction results
-            scores = pred[ij]
-            scoresMean = np.mean(scores, axis=0)
-            ascending_order = np.argsort(scoresMean)
-            IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[0], :])
-            for kk in range(topNum):
-                curCAMmap_crops = curCAMmapAll[:, :, kk]
-                curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
-                curHeatMap = cv2.resize(im2double(curCAMmapLarge_crops), (299, 299))  # this line is not doing much
-                curHeatMap = im2double(curHeatMap)
-                curHeatMap = py_map2jpg(curHeatMap, None, 'jet')
-                xim = x[ij].reshape(-1, 3)
-                xim1 = xim[:, 0].reshape(-1, 299)
-                xim2 = xim[:, 1].reshape(-1, 299)
-                xim3 = xim[:, 2].reshape(-1, 299)
-                image = np.empty([299,299,3])
-                image[:, :, 0] = xim1
-                image[:, :, 1] = xim2
-                image[:, :, 2] = xim3
-                a = im2double(image) * 255
-                b = im2double(curHeatMap) * 255
-                curHeatMap = a * 0.6 + b * 0.4
-                ab = np.hstack((a,b))
-                full = np.hstack((curHeatMap, ab))
-                # imname = DIR + '/' + id + ddt + '.png'
-                # imname1 = DIR + '/' + id + ddt + '_img.png'
-                # imname2 = DIR + '/' + id + ddt + '_hm.png'
-                imname3 = DIRR + '/' + id + ddt + '_full.png'
-                # cv2.imwrite(imname, curHeatMap)
-                # cv2.imwrite(imname1, a)
-                # cv2.imwrite(imname2, b)
-                cv2.imwrite(imname3, full)
-
-
+        if prl[ij, 0] == y[ij]:
+            ddt = 'Correct'
         else:
-            if y[ij] == 1:
-                ddt = 'Correct'
-            else:
-                ddt = 'Wrong'
+            ddt = 'Wrong'
 
-            weights_LR = w
-            activation_lastconv = np.array([net[ij]])
-            weights_LR = weights_LR.T
-            activation_lastconv = activation_lastconv.T
+        weights_LR = w
+        activation_lastconv = np.array([net[ij]])
+        weights_LR = weights_LR.T
+        activation_lastconv = activation_lastconv.T
 
-            topNum = 1  # generate heatmap for top X prediction results
-            scores = pred[ij]
-            scoresMean = np.mean(scores, axis=0)
-            ascending_order = np.argsort(scoresMean)
-            IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
-            curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[1], :])
-            for kk in range(topNum):
-                curCAMmap_crops = curCAMmapAll[:, :, kk]
-                curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
-                curHeatMap = cv2.resize(im2double(curCAMmapLarge_crops), (299, 299))  # this line is not doing much
-                curHeatMap = im2double(curHeatMap)
-                curHeatMap = py_map2jpg(curHeatMap, None, 'jet')
-                xim = x[ij].reshape(-1, 3)
-                xim1 = xim[:, 0].reshape(-1, 299)
-                xim2 = xim[:, 1].reshape(-1, 299)
-                xim3 = xim[:, 2].reshape(-1, 299)
-                image = np.empty([299,299,3])
-                image[:, :, 0] = xim1
-                image[:, :, 1] = xim2
-                image[:, :, 2] = xim3
-                a = im2double(image) * 255
-                b = im2double(curHeatMap) * 255
-                curHeatMap = a * 0.6 + b * 0.4
-                ab = np.hstack((a,b))
-                full = np.hstack((curHeatMap, ab))
-                # imname = DIR + '/' + id + ddt + '.png'
-                # imname1 = DIR + '/' + id + ddt +'_img.png'
-                # imname2 = DIR + '/' + id + ddt + '_hm.png'
-                imname3 = DIR + '/' + id + ddt + '_full.png'
-                # cv2.imwrite(imname, curHeatMap)
-                # cv2.imwrite(imname1, a)
-                # cv2.imwrite(imname2, b)
-                cv2.imwrite(imname3, full)
+        topNum = 1  # generate heatmap for top X prediction results
+        prdd = prl[ij, 0]
+        curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[prdd], :])
+        DIRR = dirdict[prdd]
+        catt = catdict[prdd]
+        for kk in range(topNum):
+            curCAMmap_crops = curCAMmapAll[:, :, kk]
+            curCAMmapLarge_crops = cv2.resize(curCAMmap_crops, (299, 299))
+            curHeatMap = cv2.resize(im2double(curCAMmapLarge_crops), (299, 299))
+            curHeatMap = im2double(curHeatMap)
+            curHeatMap = py_map2jpg(curHeatMap)
+            xim = x[ij].reshape(-1, 3)
+            xim1 = xim[:, 0].reshape(-1, 299)
+            xim2 = xim[:, 1].reshape(-1, 299)
+            xim3 = xim[:, 2].reshape(-1, 299)
+            image = np.empty([299, 299, 3])
+            image[:, :, 0] = xim1
+            image[:, :, 1] = xim2
+            image[:, :, 2] = xim3
+            a = im2double(image) * 255
+            b = im2double(curHeatMap) * 255
+            curHeatMap = a * 0.6 + b * 0.4
+            ab = np.hstack((a, b))
+            full = np.hstack((curHeatMap, ab))
+            # imname = DIRR + '/' + id + ddt + '_' + catt + '.png'
+            # imname1 = DIRR + '/' + id + ddt + '_' + catt + '_img.png'
+            # imname2 = DIRR + '/' + id + ddt + '_' + catt + '_hm.png'
+            imname3 = DIRR + '/' + id + ddt + '_' + catt + '_full.png'
+            # cv2.imwrite(imname, curHeatMap)
+            # cv2.imwrite(imname1, a)
+            # cv2.imwrite(imname2, b)
+            cv2.imwrite(imname3, full)
 
 
-def CAM_R(net, w, pred, x, path, name, rd=0):
-    DIRR = "../Neutrophil/{}/out/{}_img".format(path, name)
-    rd = rd * 1000
+def CAM_R(net, w, pred, x, path, name, bs, rd=0):
+    DIRR = "../Results/{}/out/{}_img".format(path, name)
+    rd = rd * bs
 
     try:
         os.mkdir(DIRR)
@@ -225,7 +177,7 @@ def CAM_R(net, w, pred, x, path, name, rd=0):
 
     pdx = np.asmatrix(pred)
 
-    prl = (pdx[:,1] > 0.5).astype('uint8')
+    prl = pdx.argmax(axis=1).astype('uint8')
 
     for ij in range(len(prl)):
         id = str(ij + rd)
@@ -235,10 +187,6 @@ def CAM_R(net, w, pred, x, path, name, rd=0):
         activation_lastconv = activation_lastconv.T
 
         topNum = 1  # generate heatmap for top X prediction results
-        scores = pred[ij]
-        scoresMean = np.mean(scores, axis=0)
-        ascending_order = np.argsort(scoresMean)
-        IDX_category = ascending_order[::-1]  # [::-1] to sort in descending order
         curCAMmapAll = py_returnCAMmap(activation_lastconv, weights_LR[[1], :])
         for kk in range(topNum):
             curCAMmap_crops = curCAMmapAll[:, :, kk]
@@ -270,7 +218,7 @@ def CAM_R(net, w, pred, x, path, name, rd=0):
 
 
 # Output activation for tSNE
-def tSNE_prep(flatnet, ori_test, y, pred, path, pmd):
+def tSNE_prep(flatnet, ori_test, y, pred, path):
     # format clean up
     tl = np.asmatrix(y)
     tl = tl.argmax(axis=1).astype('uint8')
@@ -279,14 +227,7 @@ def tSNE_prep(flatnet, ori_test, y, pred, path, pmd):
     prl = pd.DataFrame(prl, columns=['Prediction'])
     print(np.shape(flatnet))
     act = pd.DataFrame(np.asmatrix(flatnet))
-    if pmd == 'subtype':
-        outt = pd.DataFrame(pdxt, columns=['POLE_score', 'MSI_score', 'Endometrioid_score', 'Serous-like_score'])
-    elif pmd == 'histology':
-        outt = pd.DataFrame(pdxt, columns=['Endometrioid_score', 'Serous_score'])
-    elif pmd == 'MSIst':
-        outt = pd.DataFrame(pdxt, columns=['MSS_score', 'MSI-H_score'])
-    else:
-        outt = pd.DataFrame(pdxt, columns=['NEG_score', 'POS_score'])
+    outt = pd.DataFrame(pdxt, columns=['NEG_score', 'POS_score'])
     outtlt = pd.DataFrame(tl, columns=['True_label'])
     outt.reset_index(drop=True, inplace=True)
     prl.reset_index(drop=True, inplace=True)

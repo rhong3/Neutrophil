@@ -199,8 +199,11 @@ class INCEPTION:
 
         tf.summary.tensor_summary("{}_pred".format(model), pred)
 
-        # opt = tf.optimizers.Adam(learning_rate=self.learning_rate) ---------TF2.0
-        opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
+        # optimizer based on TensorFlow version
+        if int(str(tf.__version__).split('.', 3)[0]) == 2:
+            opt = tf.optimizers.Adam(learning_rate=self.learning_rate)
+        else:
+            opt = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
         train_op = opt.minimize(loss=pred_cost, global_step=global_step)
 
         merged_summary = tf.summary.merge_all()
@@ -227,7 +230,7 @@ class INCEPTION:
                         feed_dict = {self.x_in: x, self.is_train: train_status}
                         fetches = [self.pred, self.net, self.w]
                         pred, net, w = self.sesh.run(fetches, feed_dict)
-                        # ac.CAM(net, w, pred, x, y, dirr, 'Test', bs, pmd, rd)
+                        ac.CAM(net, w, pred, x, y, dirr, 'Test', bs, pmd, rd)
                         net = np.mean(net, axis=(1, 2))
                         if rd == 0:
                             pdx = pred
@@ -240,7 +243,7 @@ class INCEPTION:
                         rd += 1
                     except tf.errors.OutOfRangeError:
                         ac.metrics(pdx, yl, dirr, 'Test', pmd, testset)
-                        ac.tSNE_prep(flatnet=netl, ori_test=testset, y=yl, pred=pdx, path=dirr, pmd=pmd)
+                        ac.tSNE_prep(flatnet=netl, ori_test=testset, y=yl, pred=pdx, path=dirr)
                         break
         else:
             itr, file, ph = X.data(Not_Realtest=False, train=False)
@@ -459,7 +462,7 @@ class INCEPTION:
                     now = datetime.now().isoformat()[11:]
                     print("------- Training end: {} -------\n".format(now))
 
-                    if svs < 30000 and save:
+                    if svs < 1000 and save:
                             print("Save the last model as the best model.")
                             outfile = os.path.join(os.path.abspath(outdir),
                                                    "{}_{}".format(self.model, "_".join(['dropout', str(self.dropout)])))
