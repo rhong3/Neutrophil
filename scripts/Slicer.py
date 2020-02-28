@@ -59,7 +59,7 @@ def v_slide(slp, n_y, x, y, tile_size, stepsize, x0, outdir, std):
             img = normalization(img, std)
             img.save(outdir + "/region_x-{}-y-{}.png".format(image_x, image_y))
             strr = outdir + "/region_x-{}-y-{}.png".format(image_x, image_y)
-            imloc.append([x0, y0, image_x, image_y, strr])
+            imloc.append([x0, y0, image_x, image_y, target_x, target_y, strr])
             imlist.append(np.array(img)[:, :, :3])
         y0 += 1
     slide.close()
@@ -112,12 +112,12 @@ def tile(image_file, outdir, std_img, stepsize, full_width_region, path_to_slide
     tempdict = list(filter(None, tempdict))
     imloc = []
     list(map(imloc.extend, tempdict))
-    imlocpd = pd.DataFrame(imloc, columns = ["X_pos", "Y_pos", "X", "Y"])
+    imlocpd = pd.DataFrame(imloc, columns=["X_pos", "Y_pos", "X", "Y", "X_relative", "Y_relative", "file"])
     imlocpd = imlocpd.sort_values(["X_pos", "Y_pos"], ascending=[True, True])
     imlocpd = imlocpd.reset_index(drop=True)
     imlocpd = imlocpd.reset_index(drop=False)
-    imlocpd.columns = ["Num", "X_pos", "Y_pos", "X", "Y"]
-    imlocpd.to_csv(outdir + "/dict.csv", index = False)
+    imlocpd.columns = ["Num", "X_pos", "Y_pos", "X", "Y", "X_relative", "Y_relative", "file"]
+    imlocpd.to_csv(outdir + "/dict.csv", index=False)
     tempdict = None
 
     tempimglist = list(filter(None, tempimglist))

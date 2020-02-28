@@ -36,6 +36,7 @@ def cut(stepsize, tilesize, path='../images/'):
     std = staintools.LuminosityStandardizer.standardize(std)
     imlist = image_ids_in(path)
     for i in imlist:
+        print(i)
         try:
             os.mkdir("../tiles/{}".format(i[1]))
         except(FileExistsError):
