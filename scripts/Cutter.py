@@ -5,7 +5,6 @@ Created on 11/01/2018
 
 @author: RH
 """
-
 import time
 import matplotlib
 import os
