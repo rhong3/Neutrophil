@@ -60,5 +60,5 @@ def cut(stepsize, tilesize, path='../images/'):
 if __name__ == "__main__":
     if not os.path.isdir('../tiles'):
         os.mkdir('../tiles')
-    cut(50, 299)
+    cut(250, 299)
 
