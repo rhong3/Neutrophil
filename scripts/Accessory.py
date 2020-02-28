@@ -2,75 +2,142 @@ import matplotlib
 matplotlib.use('Agg')
 import os
 import numpy as np
-import sklearn as skl
+import sklearn.metrics
 import matplotlib.pyplot as plt
 import pandas as pd
 import cv2
 
 
-def realout(pdx, path, name):
+# Plot ROC and PRC plots
+def ROC_PRC(outtl, pdx, path, name, dm, accur):
+    tl = outtl.values[:, 0].ravel()
+    y_score = np.asarray(pdx[:, 1]).ravel()
+    auc = sklearn.metrics.roc_auc_score(tl, y_score)
+    auc = round(auc, 5)
+    print('{0} AUC = {1:0.5f}'.format(dm, auc))
+    fpr, tpr, _ = sklearn.metrics.roc_curve(tl, y_score)
+    plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.5f)' % auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('{} ROC'.format(name))
+    plt.legend(loc="lower right")
+    plt.savefig("../Results/{}/out/{}_{}_ROC.png".format(path, name, dm))
+
+    average_precision = sklearn.metrics.average_precision_score(tl, y_score)
+    print('Average precision-recall score: {0:0.5f}'.format(average_precision))
+    plt.figure()
+    f_scores = np.linspace(0.2, 0.8, num=4)
+    for f_score in f_scores:
+        x = np.linspace(0.01, 1)
+        y = f_score * x / (2 * x - f_score)
+        l, = plt.plot(x[y >= 0], y[y >= 0], color='gray', alpha=0.2)
+        plt.annotate('f1={0:0.1f}'.format(f_score), xy=(0.9, y[45] + 0.02))
+    precision, recall, _ = sklearn.metrics.precision_recall_curve(tl, y_score)
+    plt.step(recall, precision, color='b', alpha=0.2,
+             where='post')
+    plt.fill_between(recall, precision, step='post', alpha=0.2,
+                     color='b')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title('{} PRC: AP={:0.5f}; Accu={}'.format(name, average_precision, accur))
+    plt.savefig("../Results/{}/out/{}_{}_PRC.png".format(path, name, dm))
+
+
+# slide level; need prediction scores, true labels, output path, and name of the files for metrics;
+# accuracy, AUROC; AUPRC.
+def slide_metrics(inter_pd, path, name, fordict, pmd):
+    inter_pd = inter_pd.drop(['path', 'tile_label', 'Prediction', 'True_label'], axis=1)
+    inter_pd = inter_pd.groupby(['slide']).mean()
+    inter_pd = inter_pd.round({'slide_label': 0})
+    inter_pd['Prediction'] = inter_pd[['NEG_score', 'POS_score']].idxmax(axis=1)
+    redict = {'NEG_score': int(0), 'POS_score': int(1)}
+    inter_pd['Prediction'] = inter_pd['Prediction'].replace(redict)
+
+    # accuracy calculations
+    tott = inter_pd.shape[0]
+    accout = inter_pd.loc[inter_pd['Prediction'] == inter_pd['slide_label']]
+    accu = accout.shape[0]
+    accurr = round(accu/tott, 5)
+    print('Slide Total Accuracy: '+str(accurr))
+    try:
+        outtl_slide = inter_pd['slide_label'].to_frame(name='slide_lable')
+        pdx_slide = inter_pd[['NEG_score', 'POS_score']].values
+        ROC_PRC(outtl_slide, pdx_slide, path, name, 'slide', accurr)
+    except ValueError:
+        print('Not able to generate plots based on this set!')
+    inter_pd['Prediction'] = inter_pd['Prediction'].replace(fordict)
+    inter_pd['slide_label'] = inter_pd['slide_label'].replace(fordict)
+    inter_pd.to_csv("../Results/{}/out/{}_slide.csv".format(path, name), index=True)
+
+
+# for real image prediction, just output the prediction scores as csv
+def realout(pdx, path, name, pmd):
+    lbdict = {0: 'negative', 1: pmd}
     pdx = np.asmatrix(pdx)
-    prl = (pdx[:, 1] > 0.5).astype('uint8')
+    prl = pdx.argmax(axis=1).astype('uint8')
     prl = pd.DataFrame(prl, columns=['Prediction'])
-    out = pd.DataFrame(pdx, columns=['neg_score', 'pos_score'])
+    prl = prl.replace(lbdict)
+    out = pd.DataFrame(pdx, columns=['NEG_score', 'POS_score'])
+    out.reset_index(drop=True, inplace=True)
+    prl.reset_index(drop=True, inplace=True)
     out = pd.concat([out, prl], axis=1)
     out.insert(loc=0, column='Num', value=out.index)
-    out.to_csv("../Neutrophil/{}/out/{}.csv".format(path, name), index=False)
+    out.to_csv("../Results/{}/out/{}.csv".format(path, name), index=False)
 
 
-def metrics(pdx, tl, path, name):
-    pdx = np.asmatrix(pdx)
-    prl = (pdx[:,1] > 0.5).astype('uint8')
-    prl = pd.DataFrame(prl, columns = ['Prediction'])
-    out = pd.DataFrame(pdx, columns = ['neg_score', 'pos_score'])
-    outtl = pd.DataFrame(tl, columns = ['True_label'])
-    out = pd.concat([out,prl,outtl], axis=1)
-    out.to_csv("../Neutrophil/{}/out/{}.csv".format(path, name), index=False)
-    accu = 0
+# tile level; need prediction scores, true labels, output path, and name of the files for metrics; accuracy, AUROC; PRC.
+def metrics(pdx, tl, path, name, pmd, ori_test=None):
+    # format clean up
+    tl = np.asmatrix(tl)
+    tl = tl.argmax(axis=1).astype('uint8')
+    pdxt = np.asmatrix(pdx)
+    prl = pdxt.argmax(axis=1).astype('uint8')
+    prl = pd.DataFrame(prl, columns=['Prediction'])
+    lbdict = {0: 'negative', 1: pmd}
+    outt = pd.DataFrame(pdxt, columns=['NEG_score', 'POS_score'])
+    outtlt = pd.DataFrame(tl, columns=['True_label'])
+    if name == 'Validation' or name == 'Training':
+        outtlt = outtlt.round(0)
+    outt.reset_index(drop=True, inplace=True)
+    prl.reset_index(drop=True, inplace=True)
+    outtlt.reset_index(drop=True, inplace=True)
+    out = pd.concat([outt, prl, outtlt], axis=1)
+    if ori_test is not None:
+        ori_test.reset_index(drop=True, inplace=True)
+        out.reset_index(drop=True, inplace=True)
+        out = pd.concat([ori_test, out], axis=1)
+        slide_metrics(out, path, name, lbdict, pmd)
+
+    stprl = prl.replace(lbdict)
+    stouttl = outtlt.replace(lbdict)
+    outt.reset_index(drop=True, inplace=True)
+    stprl.reset_index(drop=True, inplace=True)
+    stouttl.reset_index(drop=True, inplace=True)
+    stout = pd.concat([outt, stprl, stouttl], axis=1)
+    if ori_test is not None:
+        ori_test.reset_index(drop=True, inplace=True)
+        stout.reset_index(drop=True, inplace=True)
+        stout = pd.concat([ori_test, stout], axis=1)
+    stout.to_csv("../Results/{}/out/{}_tile.csv".format(path, name), index=False)
+
+    # accuracy calculations
     tott = out.shape[0]
-    for idx, row in out.iterrows():
-        if row['Prediction'] == row['True_label']:
-            accu += 1
-    accur = accu/tott
-    accur = round(accur,2)
-    print('Accuracy:')
-    print(accur)
-    y_score = pdx[:,1]
+    accout = out.loc[out['Prediction'] == out['True_label']]
+    accu = accout.shape[0]
+    accurw = round(accu/tott, 5)
+    print('Tile Total Accuracy: '+str(accurw))
     try:
-        auc = skl.metrics.roc_auc_score(tl, y_score)
-        auc = round(auc,2)
-        print('ROC-AUC:')
-        print(auc)
-        fpr, tpr, _ = skl.metrics.roc_curve(tl, y_score)
-        plt.figure()
-        lw = 2
-        plt.plot(fpr, tpr, color='darkorange',
-                 lw=lw, label='ROC curve (area = %0.2f)' % auc)
-        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('ROC of {}'.format(name))
-        plt.legend(loc="lower right")
-        plt.savefig("../Neutrophil/{}/out/{}_ROC.png".format(path, name))
-
-        average_precision = skl.metrics.average_precision_score(tl, y_score)
-        print('Average precision-recall score: {0:0.2f}'.format(average_precision))
-        plt.figure()
-        precision, recall, _ = skl.metrics.precision_recall_curve(tl, y_score)
-        plt.step(recall, precision, color='b', alpha=0.2,
-                 where='post')
-        plt.fill_between(recall, precision, step='post', alpha=0.2,
-                         color='b')
-        plt.xlabel('Recall')
-        plt.ylabel('Precision')
-        plt.ylim([0.0, 1.05])
-        plt.xlim([0.0, 1.0])
-        plt.title('{} Precision-Recall curve: AP={:0.2f}; Accu={}'.format(name, average_precision, accur))
-        plt.savefig("../Neutrophil/{}/out/{}_PRC.png".format(path, name))
-    except(ValueError):
-        print('Not able to generate plots based on this test set!')
+        ROC_PRC(outtlt, pdxt, path, name, 'tile', accurw)
+    except ValueError:
+        print('Not able to generate plots based on this set!')
 
 
 def py_returnCAMmap(activation, weights_LR):
@@ -102,20 +169,19 @@ def py_map2jpg(imgmap, rang, colorMap):
 
 
 def CAM(net, w, pred, x, y, path, name, bs, rd=0):
-    DIR = "../Results/{}/out/{}_posimg".format(path, name)
-    DIRR = "../Results/{}/out/{}_negimg".format(path, name)
+    DIRA = "../Results/{}/out/{}_NEG_img".format(path, name)
+    DIRB = "../Results/{}/out/{}_POS_img".format(path, name)
+    for DIR in (DIRA, DIRB):
+        try:
+            os.mkdir(DIR)
+        except FileExistsError:
+            pass
+    catdict = {0: 'negative', 1: 'positive'}
+    dirdict = {0: DIRA, 1: DIRB}
     rd = rd*bs
 
-    try:
-        os.mkdir(DIR)
-    except(FileExistsError):
-        pass
-
-    try:
-        os.mkdir(DIRR)
-    except(FileExistsError):
-        pass
-
+    y = np.asmatrix(y)
+    y = y.argmax(axis=1).astype('uint8')
     pdx = np.asmatrix(pred)
 
     prl = (pdx[:,1] > 0.5).astype('uint8')
