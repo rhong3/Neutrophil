@@ -50,6 +50,7 @@ def cut(stepsize, tilesize, path='../images/'):
                                                                                std_img=std, stepsize=stepsize,
                                                                                full_width_region=tilesize,
                                                                                path_to_slide=path)
+            print(ct)
         except IndexError:
             pass
         if len(os.listdir(otdir)) < 2:
