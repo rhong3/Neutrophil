@@ -54,9 +54,16 @@ def v_slide(slp, n_y, x, y, tile_size, stepsize, x0, outdir, std):
         image_y = target_y + y
         img = slide.read_region((image_x, image_y), 0, (tile_size, tile_size))
         wscore = bgcheck(img, tile_size)
-        if wscore < 0.5:
+        if wscore < 0.3:
             img = img.resize((tile_size, tile_size))
-            img = normalization(img, std)
+            try:
+                img = normalization(img, std)
+            except staintools.miscellaneous.exceptions.TissueMaskException:
+                print("Empty tissue mask computed: region_x-{}-y-{}".format(image_x, image_y))
+                continue
+            except:
+                print('An error occurred: region_x-{}-y-{}'.format(image_x, image_y))
+                continue
             img.save(outdir + "/region_x-{}-y-{}.png".format(image_x, image_y))
             strr = outdir + "/region_x-{}-y-{}.png".format(image_x, image_y)
             imloc.append([x0, y0, image_x, image_y, target_x, target_y, strr])
