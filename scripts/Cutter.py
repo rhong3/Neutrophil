@@ -36,23 +36,22 @@ def cut(stepsize, tilesize, path='../images/'):
     imlist = image_ids_in(path)
     for i in imlist:
         print(i)
-        try:
-            os.mkdir("../tiles/{}".format(i[1]))
-        except FileExistsError:
-            pass
         otdir = "../tiles/{}".format(i[1])
         try:
             os.mkdir(otdir)
         except FileExistsError:
             pass
-        try:
-            n_x, n_y, raw_img, residue_x, residue_y, imglist, ct = Slicer.tile(image_file=i[0], outdir=otdir,
-                                                                               std_img=std, stepsize=stepsize,
-                                                                               full_width_region=tilesize,
-                                                                               path_to_slide=path)
-            print(ct)
-        except IndexError:
+        if os.path.exists("../tiles/{}/dict.csv".format(i[1])):
             pass
+        else:
+            try:
+                n_x, n_y, raw_img, residue_x, residue_y, imglist, ct = Slicer.tile(image_file=i[0], outdir=otdir,
+                                                                                   std_img=std, stepsize=stepsize,
+                                                                                   full_width_region=tilesize,
+                                                                                   path_to_slide=path)
+                print(ct)
+            except IndexError:
+                pass
         if len(os.listdir(otdir)) < 2:
             shutil.rmtree(otdir, ignore_errors=True)
     print("--- %s seconds ---" % (time.time() - start_time))
