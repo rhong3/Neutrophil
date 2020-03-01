@@ -129,8 +129,8 @@ def tile(image_file, outdir, std_img, stepsize, full_width_region, path_to_slide
 
     tempimglist = list(filter(None, tempimglist))
     imglist = []
-    list(map(imglist.extend, tempimglist))
-    ct = len(imglist)
+    # list(map(imglist.extend, tempimglist))
+    ct = len(imloc)
     tempimglist = None
     imglist = np.asarray(imglist)
 
