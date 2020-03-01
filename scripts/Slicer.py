@@ -67,7 +67,7 @@ def v_slide(slp, n_y, x, y, tile_size, stepsize, x0, outdir, std):
             img.save(outdir + "/region_x-{}-y-{}.png".format(image_x, image_y))
             strr = outdir + "/region_x-{}-y-{}.png".format(image_x, image_y)
             imloc.append([x0, y0, image_x, image_y, target_x, target_y, strr])
-            imlist.append(np.array(img)[:, :, :3])
+            # imlist.append(np.array(img)[:, :, :3])
         y0 += 1
     slide.close()
     return imloc, imlist
@@ -129,7 +129,7 @@ def tile(image_file, outdir, std_img, stepsize, full_width_region, path_to_slide
 
     tempimglist = list(filter(None, tempimglist))
     imglist = []
-    # list(map(imglist.extend, tempimglist))
+    list(map(imglist.extend, tempimglist))
     ct = len(imloc)
     tempimglist = None
     imglist = np.asarray(imglist)
