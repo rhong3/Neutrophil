@@ -42,6 +42,7 @@ def cut(stepsize, tilesize, path='../images/'):
         except FileExistsError:
             pass
         if os.path.exists("../tiles/{}/dict.csv".format(i[1])):
+            print("{} exist!".format(i[1]))
             pass
         else:
             try:
