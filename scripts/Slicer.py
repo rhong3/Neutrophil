@@ -22,6 +22,7 @@ def bgcheck(img, ts):
     mask = mask[:, :, 0] * mask[:, :, 1] * mask[:, :, 2]
     maskb = maskb[:, :, 0] * maskb[:, :, 1] * maskb[:, :, 2]
     white = (np.sum(mask) + np.sum(maskb)) / (ts * ts)
+
     return white
 
 
@@ -56,16 +57,16 @@ def v_slide(slp, n_y, x, y, tile_size, stepsize, x0, outdir, std):
         wscore = bgcheck(img, tile_size)
         if wscore < 0.3:
             img = img.resize((tile_size, tile_size))
-            try:
-                img = normalization(img, std)
-            except staintools.miscellaneous.exceptions.TissueMaskException:
-                print("Empty tissue mask computed: region_x-{}-y-{}".format(image_x, image_y))
-                y0 += 1
-                continue
-            except:
-                print('An error occurred: region_x-{}-y-{}'.format(image_x, image_y))
-                y0 += 1
-                continue
+            # try:
+            #     img = normalization(img, std)
+            # except staintools.miscellaneous.exceptions.TissueMaskException:
+            #     print("Empty tissue mask computed: region_x-{}-y-{}".format(image_x, image_y))
+            #     y0 += 1
+            #     continue
+            # except:
+            #     print('An error occurred: region_x-{}-y-{}'.format(image_x, image_y))
+            #     y0 += 1
+            #     continue
             img.save(outdir + "/region_x-{}-y-{}.png".format(image_x, image_y))
             strr = outdir + "/region_x-{}-y-{}.png".format(image_x, image_y)
             imloc.append([x0, y0, image_x, image_y, target_x, target_y, strr])
