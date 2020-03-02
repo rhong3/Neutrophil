@@ -60,9 +60,11 @@ def v_slide(slp, n_y, x, y, tile_size, stepsize, x0, outdir, std):
                 img = normalization(img, std)
             except staintools.miscellaneous.exceptions.TissueMaskException:
                 print("Empty tissue mask computed: region_x-{}-y-{}".format(image_x, image_y))
+                y0 += 1
                 continue
             except:
                 print('An error occurred: region_x-{}-y-{}'.format(image_x, image_y))
+                y0 += 1
                 continue
             img.save(outdir + "/region_x-{}-y-{}.png".format(image_x, image_y))
             strr = outdir + "/region_x-{}-y-{}.png".format(image_x, image_y)
