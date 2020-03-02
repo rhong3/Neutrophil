@@ -35,6 +35,7 @@ def cut(stepsize, tilesize, path='../images/'):
     std = staintools.LuminosityStandardizer.standardize(std)
     imlist = image_ids_in(path)
     for i in imlist:
+        begin_time = time.time()
         print(i)
         otdir = "../tiles/{}".format(i[1])
         try:
@@ -55,7 +56,7 @@ def cut(stepsize, tilesize, path='../images/'):
                 pass
         if len(os.listdir(otdir)) < 2:
             shutil.rmtree(otdir, ignore_errors=True)
-        print("--- %s seconds ---" % (time.time() - start_time))
+        print("--- %s seconds ---" % (time.time() - begin_time))
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
