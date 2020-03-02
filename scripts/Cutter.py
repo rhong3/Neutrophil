@@ -13,11 +13,11 @@ import pandas as pd
 matplotlib.use('Agg')
 import Slicer
 import staintools
-import re
+import pandas as pd
 
 
 # Get all images in the root directory
-def image_ids_in(root_dir, ignore=['.DS_Store', 'dict.csv']):
+def image_ids_in(root_dir, ignore=['.DS_Store', 'dict.csv', 'rename.s']):
     ids = []
     for id in os.listdir(root_dir):
         if id in ignore:
@@ -34,6 +34,7 @@ def cut(stepsize, tilesize, path='../images/'):
     std = staintools.read_image("../colorstandard.png")
     std = staintools.LuminosityStandardizer.standardize(std)
     imlist = image_ids_in(path)
+    meta = []
     for i in imlist:
         begin_time = time.time()
         print(i)
@@ -44,6 +45,7 @@ def cut(stepsize, tilesize, path='../images/'):
             pass
         if os.path.exists("../tiles/{}/dict.csv".format(i[1])):
             print("{} exist!".format(i[1]))
+            ct = None
             pass
         else:
             try:
@@ -56,7 +58,11 @@ def cut(stepsize, tilesize, path='../images/'):
                 pass
         if len(os.listdir(otdir)) < 2:
             shutil.rmtree(otdir, ignore_errors=True)
+        tm = time.time() - begin_time
         print("--- %s seconds ---" % (time.time() - begin_time))
+        meta.append([i[1], ct, tm])
+    metapd = pd.DataFrame(meta, columns=['name', 'count', 'time'])
+    metapd.to_csv("../meta.csv", header=0)
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
