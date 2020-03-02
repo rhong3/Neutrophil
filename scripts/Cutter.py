@@ -55,6 +55,7 @@ def cut(stepsize, tilesize, path='../images/'):
                 pass
         if len(os.listdir(otdir)) < 2:
             shutil.rmtree(otdir, ignore_errors=True)
+        print("--- %s seconds ---" % (time.time() - start_time))
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
