@@ -56,6 +56,9 @@ def cut(stepsize, tilesize, path='../images/'):
                 print(ct)
             except IndexError:
                 pass
+            except:
+                print("{} error!".format(i[1]))
+                continue
         if len(os.listdir(otdir)) < 2:
             shutil.rmtree(otdir, ignore_errors=True)
         tm = time.time() - begin_time
@@ -71,4 +74,3 @@ if __name__ == "__main__":
     if not os.path.isdir('../tiles'):
         os.mkdir('../tiles')
     cut(250, 299)
-
