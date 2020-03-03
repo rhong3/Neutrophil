@@ -65,7 +65,7 @@ def cut(stepsize, tilesize, path='../images/'):
         print("--- %s seconds ---" % (time.time() - begin_time))
         meta.append([i[1], ct, tm])
     metapd = pd.DataFrame(meta, columns=['name', 'count', 'time'])
-    metapd.to_csv("../meta.csv", header=0)
+    metapd.to_csv("../meta.csv", index=False)
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
