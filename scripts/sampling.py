@@ -13,20 +13,14 @@ if __name__ == "__main__":
             dirname = id
             exclude = ['0000026276', '0000026279', '0000026280']
             dic = pd.read_csv('../tiles/{}/{}_dict.csv'.format(dirname, dirname), header=0)
-            tff=[]
-            for idx, row in dic.iterrows():
-                tff.append('../tiles/{}/{}_{}'.format(dirname, dirname, str(row['file'].split('/')[-1])))
-            dic['tile_file'] = tff
-            dic = dic.drop(columns=['file'])
-            dic.to_csv('../tiles/{}/{}_dict.csv'.format(dirname, dirname), index=False)
             if dirname in exclude:
                 print('Skipping slide:', dirname)
             else:
                 sampled_dic = dic.sample(int(dic.shape[0]/250), replace=False)
                 newpd=pd.concat([newpd, sampled_dic])
-    newpd.to_csv('../sampled_tiles/sampled_for_label_batch1.csv', index=False)
+    newpd.to_csv('../sampled_tiles/sampled_for_label_batch2.csv', index=False)
 
-    samplelist = pd.read_csv('../sampled_tiles/sampled_for_label_batch1.csv', header=0)
+    samplelist = pd.read_csv('../sampled_tiles/sampled_for_label_batch2.csv', header=0)
     for idx, row in samplelist.iterrows():
         shutil.copyfile(str(row['tile_file']), '../sampled_tiles/{}'.format(str(row['tile_file']).split('/')[-1]))
 
