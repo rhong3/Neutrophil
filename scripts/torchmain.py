@@ -412,7 +412,7 @@ if __name__ == '__main__':
         plt.ylim([0.0, 1.05])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-        plt.title('ROC of COVID')
+        plt.title('ROC')
         plt.legend(loc="lower right")
         plt.savefig("../Results/{}/out/ROC_tile.png".format(dirr))
 
@@ -434,7 +434,7 @@ if __name__ == '__main__':
         plt.ylabel('Precision')
         plt.ylim([0.0, 1.05])
         plt.xlim([0.0, 1.0])
-        plt.title('COVID PRC: AP={:0.5f}; Accu={}'.format(average_precision, acc))
+        plt.title('PRC: AP={:0.5f}; Accu={}'.format(average_precision, acc))
         plt.savefig("../Results/{}/out/PRC_tile.png".format(dirr))
 
         summarylist.extend([TP, TN, FN, FP, p, r, F1, acc, AUC, average_precision])
@@ -484,7 +484,7 @@ if __name__ == '__main__':
         # plt.ylim([0.0, 1.05])
         # plt.xlabel('False Positive Rate')
         # plt.ylabel('True Positive Rate')
-        # plt.title('ROC of COVID')
+        # plt.title('ROC')
         # plt.legend(loc="lower right")
         # plt.savefig("../Results/{}/out/ROC_slide.png".format(dirr))
         #
@@ -506,7 +506,7 @@ if __name__ == '__main__':
         # plt.ylabel('Precision')
         # plt.ylim([0.0, 1.05])
         # plt.xlim([0.0, 1.0])
-        # plt.title('COVID PRC: AP={:0.5f}; Accu={}'.format(average_precision, acc))
+        # plt.title('PRC: AP={:0.5f}; Accu={}'.format(average_precision, acc))
         # plt.savefig("../Results/{}/out/PRC_slide.png".format(dirr))
 
         summarylist.extend([TP, TN, FN, FP, p, r, F1, acc])
