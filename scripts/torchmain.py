@@ -19,7 +19,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 import numpy as np
 from sklearn.metrics import roc_auc_score, roc_curve, average_precision_score, precision_recall_curve
-import Sample_prep
+import setsep
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -52,15 +52,15 @@ class DataSet(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_path = self.imglist[idx][0]
+        img_path = self.imglist[idx][1]
         image = Image.open(img_path).convert('RGB')
 
         if self.transform:
             image = self.transform(image)
         sample = {'img': image,
-                  'label': int(self.imglist[idx][1]),
-                  'patient': str(self.imglist[idx][2]),
-                  'path': str(self.imglist[idx][0])}
+                  'label': int(self.imglist[idx][2]),
+                  'slide': str(self.imglist[idx][0]),
+                  'path': str(self.imglist[idx][1])}
         return sample
 
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         tes = DataSet(str(data_dir + '/te_sample.csv'), transform=val_transformer)
         vas = DataSet(str(data_dir + '/va_sample.csv'), transform=val_transformer)
     except FileNotFoundError:
-        Sample_prep.set_sep(path=data_dir)
+        setsep.set_sep(path=data_dir)
         trs = DataSet(str(data_dir + '/tr_sample.csv'), transform=train_transformer)
         tes = DataSet(str(data_dir + '/te_sample.csv'), transform=val_transformer)
         vas = DataSet(str(data_dir + '/va_sample.csv'), transform=val_transformer)
@@ -202,6 +202,14 @@ if __name__ == '__main__':
 
     losslist = []
 
+    summarylist = []
+    if '_pt' in md:
+        summarylist.append(md.split('_pt')[0])
+        summarylist.append('pretrained')
+    else:
+        summarylist.append(md)
+        summarylist.append('scratch')
+
     for epoch in range(ep):
         train_loss = 0
         train_correct = 0
@@ -228,13 +236,13 @@ if __name__ == '__main__':
         predlist = []
         scorelist = []
         targetlist = []
-        patientlist = []
+        slidelist = []
         pathlist = []
         with torch.no_grad():
             # Predict
             for batch_index, batch_samples in enumerate(val_loader):
-                data, target, patient, impath = batch_samples['img'].to('cuda'), batch_samples['label'].to('cuda'), \
-                                                batch_samples['patient'], batch_samples['path']
+                data, target, slide, impath = batch_samples['img'].to('cuda'), batch_samples['label'].to('cuda'), \
+                                                batch_samples['slide'], batch_samples['path']
                 output = model(data)
                 loss_fn = nn.CrossEntropyLoss()
                 loss = loss_fn(output, target.long())
@@ -246,7 +254,7 @@ if __name__ == '__main__':
                 predlist = np.append(predlist, pred.cpu().numpy())
                 scorelist = np.append(scorelist, score.cpu().numpy()[:, 1])
                 targetlist = np.append(targetlist, targetcpu)
-                patientlist = np.append(patientlist, patient)
+                slidelist = np.append(slidelist, slide)
                 pathlist = np.append(pathlist, impath)
             ave_val_loss = val_loss.cpu().numpy() / len(val_loader.dataset)
             losslist = np.append(losslist, ave_val_loss)
@@ -260,10 +268,10 @@ if __name__ == '__main__':
                     'prediction': predlist,
                     'target': targetlist,
                     'score': scorelist,
-                    'patient': patientlist,
+                    'slide': slidelist,
                     'path': pathlist
                 })
-                best_joined.to_csv('{}/best_validation_image.csv'.format(out_dir), index=False)
+                best_joined.to_csv('{}/best_validation_tile.csv'.format(out_dir), index=False)
 
             print('\nValidation set: Average loss: {:.4f}, Image Accuracy: {}/{} ({:.0f}%)\n'.format(
                 ave_val_loss, correct, len(val_loader.dataset),
@@ -273,7 +281,7 @@ if __name__ == '__main__':
             TN = ((predlist == 0) & (targetlist == 0)).sum()
             FN = ((predlist == 0) & (targetlist == 1)).sum()
             FP = ((predlist == 1) & (targetlist == 0)).sum()
-            print("\nPer image metrics: ")
+            print("\nPer tile metrics: ")
             print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
             print('TP+FP=', TP + FP)
             if (TP + FP) != 0:
@@ -292,20 +300,20 @@ if __name__ == '__main__':
                 'prediction': predlist,
                 'target': targetlist,
                 'score': scorelist,
-                'patient': patientlist
+                'slide': slidelist
             })
 
-            joined = joined.groupby(['patient']).mean()
+            joined = joined.groupby(['slide']).mean()
             joined = joined.round({'prediction': 0, 'target': 0})
             if best_epoch == epoch:
-                joined.to_csv('{}/best_validation_patient.csv'.format(out_dir), index=True)
+                joined.to_csv('{}/best_validation_slide.csv'.format(out_dir), index=True)
 
-            print("\nPer patient metrics: ")
+            print("\nPer slide metrics: ")
             TP = joined.loc[(joined['prediction'] == 1) & (joined['target'] == 1)].shape[0]
             TN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 0)].shape[0]
             FN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 1)].shape[0]
             FP = joined.loc[(joined['prediction'] == 1) & (joined['target'] == 0)].shape[0]
-            print("Per image metrics: ")
+            print("Per tile metrics: ")
             print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
             print('TP+FP=', TP + FP)
             if (TP+FP) != 0:
@@ -325,6 +333,7 @@ if __name__ == '__main__':
                 break
 
     print('\nBest model @ epoch: ', best_epoch)
+    summarylist.append(best_epoch)
 
     # test
     test_loss = 0
@@ -334,13 +343,13 @@ if __name__ == '__main__':
     predlist = []
     scorelist = []
     targetlist = []
-    patientlist = []
+    slidelist = []
     pathlist = []
     with torch.no_grad():
         # Predict
         for batch_index, batch_samples in enumerate(test_loader):
-            data, target, patient, impath = batch_samples['img'].to('cuda'), batch_samples['label'].to('cuda'), \
-                                            batch_samples['patient'], batch_samples['path']
+            data, target, slide, impath = batch_samples['img'].to('cuda'), batch_samples['label'].to('cuda'), \
+                                            batch_samples['slide'], batch_samples['path']
 
             output = model(data)
             loss_fn = nn.CrossEntropyLoss()
@@ -353,23 +362,25 @@ if __name__ == '__main__':
             predlist = np.append(predlist, pred.cpu().numpy())
             scorelist = np.append(scorelist, score.cpu().numpy()[:, 1])
             targetlist = np.append(targetlist, targetcpu)
-            patientlist = np.append(patientlist, patient)
+            slidelist = np.append(slidelist, slide)
             pathlist = np.append(pathlist, impath)
         ave_test_loss = test_loss.cpu().numpy() / len(val_loader.dataset)
         print('\nTest set: Average loss: {:.4f}, Image Accuracy: {}/{} ({:.0f}%)\n'.format(
             ave_test_loss, correct, len(test_loader.dataset),
             100.0 * correct / len(test_loader.dataset)), flush=True)
 
-        image_joined = pd.DataFrame({
+        summarylist.append(ave_test_loss)
+
+        tile_joined = pd.DataFrame({
             'prediction': predlist,
             'target': targetlist,
             'score': scorelist,
-            'patient': patientlist,
+            'slide': slidelist,
             'path': pathlist
         })
-        image_joined.to_csv('{}/test_image.csv'.format(out_dir), index=False)
+        tile_joined.to_csv('{}/test_tile.csv'.format(out_dir), index=False)
 
-        print("\nPer image metrics: ")
+        print("\nPer tile metrics: ")
         TP = ((predlist == 1) & (targetlist == 1)).sum()
         TN = ((predlist == 0) & (targetlist == 0)).sum()
         FN = ((predlist == 0) & (targetlist == 1)).sum()
@@ -383,6 +394,10 @@ if __name__ == '__main__':
             print('recall', r)
             F1 = 2 * r * p / (r + p)
             print('F1', F1)
+        else:
+            p = np.nan
+            r = np.nan
+            F1 = np.nan
         acc = (TP + TN) / (TP + TN + FP + FN)
         print('acc', acc)
         AUC = roc_auc_score(targetlist, scorelist)
@@ -400,7 +415,7 @@ if __name__ == '__main__':
         plt.ylabel('True Positive Rate')
         plt.title('ROC of COVID')
         plt.legend(loc="lower right")
-        plt.savefig("../Results/{}/out/ROC_image.png".format(dirr))
+        plt.savefig("../Results/{}/out/ROC_tile.png".format(dirr))
 
         average_precision = average_precision_score(targetlist, scorelist)
         print('Average precision-recall score: {0:0.5f}'.format(average_precision))
@@ -421,20 +436,23 @@ if __name__ == '__main__':
         plt.ylim([0.0, 1.05])
         plt.xlim([0.0, 1.0])
         plt.title('COVID PRC: AP={:0.5f}; Accu={}'.format(average_precision, acc))
-        plt.savefig("../Results/{}/out/PRC_image.png".format(dirr))
+        plt.savefig("../Results/{}/out/PRC_tile.png".format(dirr))
+
+        summarylist.extend([TP, TN, FN, FP, p, r, F1, acc, AUC, average_precision])
+
 
         joined = pd.DataFrame({
             'prediction': predlist,
             'target': targetlist,
             'score': scorelist,
-            'patient': patientlist
+            'slide': slidelist
         })
 
-        joined = joined.groupby(['patient']).mean()
+        joined = joined.groupby(['slide']).mean()
         joined = joined.round({'prediction': 0, 'target': 0})
-        joined.to_csv('{}/test_patient.csv'.format(out_dir), index=True)
+        joined.to_csv('{}/test_slide.csv'.format(out_dir), index=True)
 
-        print("\nPer patient metrics: ")
+        print("\nPer slide metrics: ")
         TP = joined.loc[(joined['prediction'] == 1) & (joined['target'] == 1)].shape[0]
         TN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 0)].shape[0]
         FN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 1)].shape[0]
@@ -448,6 +466,10 @@ if __name__ == '__main__':
             print('recall=', r)
             F1 = 2 * r * p / (r + p)
             print('F1=', F1)
+        else:
+            p = np.nan
+            r = np.nan
+            F1 = np.nan
         acc = (TP + TN) / (TP + TN + FP + FN)
         print('acc=', acc)
         AUC = roc_auc_score(joined['target'].tolist(), joined['score'].tolist())
@@ -465,7 +487,7 @@ if __name__ == '__main__':
         plt.ylabel('True Positive Rate')
         plt.title('ROC of COVID')
         plt.legend(loc="lower right")
-        plt.savefig("../Results/{}/out/ROC_patient.png".format(dirr))
+        plt.savefig("../Results/{}/out/ROC_slide.png".format(dirr))
 
         average_precision = average_precision_score(joined['target'].tolist(), joined['score'].tolist())
         print('Average precision-recall score: {0:0.5f}'.format(average_precision))
@@ -486,5 +508,14 @@ if __name__ == '__main__':
         plt.ylim([0.0, 1.05])
         plt.xlim([0.0, 1.0])
         plt.title('COVID PRC: AP={:0.5f}; Accu={}'.format(average_precision, acc))
-        plt.savefig("../Results/{}/out/PRC_patient.png".format(dirr))
+        plt.savefig("../Results/{}/out/PRC_slide.png".format(dirr))
+
+        summarylist.extend([TP, TN, FN, FP, p, r, F1, acc, AUC, average_precision])
+
+    summarypd = pd.DataFrame([summarylist], columns=['model', 'state', 'best epoch', 'test loss', 'TP_tile',
+                                                     'TN_tile', 'FN_tile', 'FP_tile', 'precision_tile',
+                                                     'recall_tile', 'F1_tile', 'accuracy_tile', 'AUROC_tile',
+                                                     'AUPRC_tile',	'TP_slide', 'TN_slide', 'FN_slide',
+                                                     'FP_slide', 'precision_slide',	'recall_slide', 'F1_slide',
+                                                     'accuracy_slide', 'AUROC_slide', 'AUPRC_slide'])
 
