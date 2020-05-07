@@ -304,15 +304,15 @@ if __name__ == '__main__':
             })
 
             joined = joined.groupby(['slide']).mean()
-            joined = joined.round({'prediction': 1, 'target': 1})
+            joined = joined.round({'prediction': 3, 'target': 3})
             if best_epoch == epoch:
                 joined.to_csv('{}/best_validation_slide.csv'.format(out_dir), index=True)
 
             print("\nPer slide metrics: ")
-            TP = joined.loc[(joined['prediction'] == 1) & (joined['target'] == 1)].shape[0]
+            TP = joined.loc[(joined['prediction'] != 0) & (joined['target'] != 0)].shape[0]
             TN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 0)].shape[0]
-            FN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 1)].shape[0]
-            FP = joined.loc[(joined['prediction'] == 1) & (joined['target'] == 0)].shape[0]
+            FN = joined.loc[(joined['prediction'] == 0) & (joined['target'] != 0)].shape[0]
+            FP = joined.loc[(joined['prediction'] != 0) & (joined['target'] == 0)].shape[0]
             print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
             print('TP+FP=', TP + FP)
             if (TP+FP) != 0:
@@ -324,8 +324,8 @@ if __name__ == '__main__':
                 print('F1=', F1)
             acc = (TP + TN) / (TP + TN + FP + FN)
             print('acc=', acc)
-            AUC = roc_auc_score(joined['target'].tolist(), joined['score'].tolist())
-            print('AUC=', AUC)
+            # AUC = roc_auc_score(joined['target'].tolist(), joined['score'].tolist())
+            # print('AUC=', AUC)
 
             if epoch > 99 and ave_val_loss >= np.mean(losslist[-21:-1]):
                 print("\nEarly stop criteria met @ epoch: ", epoch)
@@ -448,14 +448,14 @@ if __name__ == '__main__':
         })
 
         joined = joined.groupby(['slide']).mean()
-        joined = joined.round({'prediction': 1, 'target': 1})
+        joined = joined.round({'prediction': 3, 'target': 3})
         joined.to_csv('{}/test_slide.csv'.format(out_dir), index=True)
 
         print("\nPer slide metrics: ")
-        TP = joined.loc[(joined['prediction'] == 1) & (joined['target'] == 1)].shape[0]
+        TP = joined.loc[(joined['prediction'] != 0) & (joined['target'] != 0)].shape[0]
         TN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 0)].shape[0]
-        FN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 1)].shape[0]
-        FP = joined.loc[(joined['prediction'] == 1) & (joined['target'] == 0)].shape[0]
+        FN = joined.loc[(joined['prediction'] == 0) & (joined['target'] != 0)].shape[0]
+        FP = joined.loc[(joined['prediction'] != 0) & (joined['target'] == 0)].shape[0]
         print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
         print('TP+FP=', TP + FP)
         if (TP + FP) != 0:
@@ -471,50 +471,50 @@ if __name__ == '__main__':
             F1 = np.nan
         acc = (TP + TN) / (TP + TN + FP + FN)
         print('acc=', acc)
-        AUC = roc_auc_score(joined['target'].tolist(), joined['score'].tolist())
-        print('AUC=', AUC)
+        # AUC = roc_auc_score(joined['target'].tolist(), joined['score'].tolist())
+        # print('AUC=', AUC)
+        #
+        # fpr, tpr, _ = roc_curve(joined['target'].tolist(), joined['score'].tolist())
+        # plt.figure()
+        # lw = 2
+        # plt.plot(fpr, tpr, color='darkorange',
+        #          lw=lw, label='ROC curve (area = %0.5f)' % AUC)
+        # plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        # plt.xlim([0.0, 1.0])
+        # plt.ylim([0.0, 1.05])
+        # plt.xlabel('False Positive Rate')
+        # plt.ylabel('True Positive Rate')
+        # plt.title('ROC of COVID')
+        # plt.legend(loc="lower right")
+        # plt.savefig("../Results/{}/out/ROC_slide.png".format(dirr))
+        #
+        # average_precision = average_precision_score(joined['target'].tolist(), joined['score'].tolist())
+        # print('Average precision-recall score: {0:0.5f}'.format(average_precision))
+        # plt.figure()
+        # f_scores = np.linspace(0.2, 0.8, num=4)
+        # for f_score in f_scores:
+        #     x = np.linspace(0.01, 1)
+        #     y = f_score * x / (2 * x - f_score)
+        #     l, = plt.plot(x[y >= 0], y[y >= 0], color='gray', alpha=0.2)
+        #     plt.annotate('f1={0:0.1f}'.format(f_score), xy=(0.9, y[45] + 0.02))
+        # precision, recall, _ = precision_recall_curve(joined['target'].tolist(), joined['score'].tolist())
+        # plt.step(recall, precision, color='b', alpha=0.2,
+        #          where='post')
+        # plt.fill_between(recall, precision, step='post', alpha=0.2,
+        #                  color='b')
+        # plt.xlabel('Recall')
+        # plt.ylabel('Precision')
+        # plt.ylim([0.0, 1.05])
+        # plt.xlim([0.0, 1.0])
+        # plt.title('COVID PRC: AP={:0.5f}; Accu={}'.format(average_precision, acc))
+        # plt.savefig("../Results/{}/out/PRC_slide.png".format(dirr))
 
-        fpr, tpr, _ = roc_curve(joined['target'].tolist(), joined['score'].tolist())
-        plt.figure()
-        lw = 2
-        plt.plot(fpr, tpr, color='darkorange',
-                 lw=lw, label='ROC curve (area = %0.5f)' % AUC)
-        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('ROC of COVID')
-        plt.legend(loc="lower right")
-        plt.savefig("../Results/{}/out/ROC_slide.png".format(dirr))
-
-        average_precision = average_precision_score(joined['target'].tolist(), joined['score'].tolist())
-        print('Average precision-recall score: {0:0.5f}'.format(average_precision))
-        plt.figure()
-        f_scores = np.linspace(0.2, 0.8, num=4)
-        for f_score in f_scores:
-            x = np.linspace(0.01, 1)
-            y = f_score * x / (2 * x - f_score)
-            l, = plt.plot(x[y >= 0], y[y >= 0], color='gray', alpha=0.2)
-            plt.annotate('f1={0:0.1f}'.format(f_score), xy=(0.9, y[45] + 0.02))
-        precision, recall, _ = precision_recall_curve(joined['target'].tolist(), joined['score'].tolist())
-        plt.step(recall, precision, color='b', alpha=0.2,
-                 where='post')
-        plt.fill_between(recall, precision, step='post', alpha=0.2,
-                         color='b')
-        plt.xlabel('Recall')
-        plt.ylabel('Precision')
-        plt.ylim([0.0, 1.05])
-        plt.xlim([0.0, 1.0])
-        plt.title('COVID PRC: AP={:0.5f}; Accu={}'.format(average_precision, acc))
-        plt.savefig("../Results/{}/out/PRC_slide.png".format(dirr))
-
-        summarylist.extend([TP, TN, FN, FP, p, r, F1, acc, AUC, average_precision])
+        summarylist.extend([TP, TN, FN, FP, p, r, F1, acc])
 
     summarypd = pd.DataFrame([summarylist], columns=['model', 'state', 'best epoch', 'test loss', 'TP_tile',
                                                      'TN_tile', 'FN_tile', 'FP_tile', 'precision_tile',
                                                      'recall_tile', 'F1_tile', 'accuracy_tile', 'AUROC_tile',
                                                      'AUPRC_tile',	'TP_slide', 'TN_slide', 'FN_slide',
                                                      'FP_slide', 'precision_slide',	'recall_slide', 'F1_slide',
-                                                     'accuracy_slide', 'AUROC_slide', 'AUPRC_slide'])
+                                                     'accuracy_slide'])
 
