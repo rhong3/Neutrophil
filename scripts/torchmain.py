@@ -304,7 +304,7 @@ if __name__ == '__main__':
             })
 
             joined = joined.groupby(['slide']).mean()
-            joined = joined.round({'prediction': 3, 'target': 3})
+            joined = joined.round({'prediction': 1, 'target': 1})
             if best_epoch == epoch:
                 joined.to_csv('{}/best_validation_slide.csv'.format(out_dir), index=True)
 
@@ -448,7 +448,7 @@ if __name__ == '__main__':
         })
 
         joined = joined.groupby(['slide']).mean()
-        joined = joined.round({'prediction': 3, 'target': 3})
+        joined = joined.round({'prediction': 1, 'target': 1})
         joined.to_csv('{}/test_slide.csv'.format(out_dir), index=True)
 
         print("\nPer slide metrics: ")
