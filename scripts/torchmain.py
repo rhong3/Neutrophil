@@ -225,7 +225,7 @@ if __name__ == '__main__':
             optimizer.step()
             pred = output.argmax(dim=1, keepdim=True)
             train_correct += pred.eq(target.long().view_as(pred)).sum().item()
-        print('\nEpoch: {} \nTrain set: Average loss: {:.4f}, Image Accuracy: {}/{} ({:.0f}%)\n'.format(
+        print('\nEpoch: {} \nTrain set: Average loss: {:.4f}, Tile Accuracy: {}/{} ({:.0f}%)\n'.format(
             epoch, train_loss / len(train_loader.dataset), train_correct, len(train_loader.dataset),
             100.0 * train_correct / len(train_loader.dataset)), flush=True)
 
@@ -273,7 +273,7 @@ if __name__ == '__main__':
                 })
                 best_joined.to_csv('{}/best_validation_tile.csv'.format(out_dir), index=False)
 
-            print('\nValidation set: Average loss: {:.4f}, Image Accuracy: {}/{} ({:.0f}%)\n'.format(
+            print('\nValidation set: Average loss: {:.4f}, Tile Accuracy: {}/{} ({:.0f}%)\n'.format(
                 ave_val_loss, correct, len(val_loader.dataset),
                 100.0 * correct / len(val_loader.dataset)), flush=True)
 
@@ -304,7 +304,7 @@ if __name__ == '__main__':
             })
 
             joined = joined.groupby(['slide']).mean()
-            joined = joined.round({'prediction': 0, 'target': 0})
+            joined = joined.round({'prediction': 3, 'target': 3})
             if best_epoch == epoch:
                 joined.to_csv('{}/best_validation_slide.csv'.format(out_dir), index=True)
 
@@ -313,7 +313,6 @@ if __name__ == '__main__':
             TN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 0)].shape[0]
             FN = joined.loc[(joined['prediction'] == 0) & (joined['target'] == 1)].shape[0]
             FP = joined.loc[(joined['prediction'] == 1) & (joined['target'] == 0)].shape[0]
-            print("Per tile metrics: ")
             print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
             print('TP+FP=', TP + FP)
             if (TP+FP) != 0:
@@ -365,7 +364,7 @@ if __name__ == '__main__':
             slidelist = np.append(slidelist, slide)
             pathlist = np.append(pathlist, impath)
         ave_test_loss = test_loss.cpu().numpy() / len(val_loader.dataset)
-        print('\nTest set: Average loss: {:.4f}, Image Accuracy: {}/{} ({:.0f}%)\n'.format(
+        print('\nTest set: Average loss: {:.4f}, Tile Accuracy: {}/{} ({:.0f}%)\n'.format(
             ave_test_loss, correct, len(test_loader.dataset),
             100.0 * correct / len(test_loader.dataset)), flush=True)
 
@@ -449,7 +448,7 @@ if __name__ == '__main__':
         })
 
         joined = joined.groupby(['slide']).mean()
-        joined = joined.round({'prediction': 0, 'target': 0})
+        joined = joined.round({'prediction': 3, 'target': 3})
         joined.to_csv('{}/test_slide.csv'.format(out_dir), index=True)
 
         print("\nPer slide metrics: ")
