@@ -16,6 +16,7 @@ def set_sep(path, cut=0.3):
     telist = []
     valist = []
     dic = pd.read_csv('../../sampled_label_ready.csv', header=0)
+    dic = dic.dropna()
     unq = list(dic.slide.unique())
     validation = unq[:int(len(unq) * cut / 2)]
     valist.append(dic[dic['slide'].isin(validation)])
