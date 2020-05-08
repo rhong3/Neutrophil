@@ -284,7 +284,7 @@ if __name__ == '__main__':
             print("\nPer tile metrics: ")
             print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
             print('TP+FP=', TP + FP)
-            if (TP + FP) != 0:
+            if TP != 0:
                 p = TP / (TP + FP)
                 print('precision=', p)
                 r = TP / (TP + FN)
@@ -315,7 +315,7 @@ if __name__ == '__main__':
             FP = joined.loc[(joined['prediction'] != 0) & (joined['target'] == 0)].shape[0]
             print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
             print('TP+FP=', TP + FP)
-            if (TP+FP) != 0:
+            if TP != 0:
                 p = TP / (TP + FP)
                 print('precision=', p)
                 r = TP / (TP + FN)
@@ -386,7 +386,7 @@ if __name__ == '__main__':
         FP = ((predlist == 1) & (targetlist == 0)).sum()
         print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
         print('TP+FP', TP + FP)
-        if (TP + FP) != 0:
+        if TP != 0:
             p = TP / (TP + FP)
             print('precision', p)
             r = TP / (TP + FN)
@@ -458,7 +458,7 @@ if __name__ == '__main__':
         FP = joined.loc[(joined['prediction'] != 0) & (joined['target'] == 0)].shape[0]
         print('TP=', TP, 'TN=', TN, 'FN=', FN, 'FP=', FP)
         print('TP+FP=', TP + FP)
-        if (TP + FP) != 0:
+        if TP != 0:
             p = TP / (TP + FP)
             print('precision=', p)
             r = TP / (TP + FN)
