@@ -517,4 +517,5 @@ if __name__ == '__main__':
                                                      'AUPRC_tile',	'TP_slide', 'TN_slide', 'FN_slide',
                                                      'FP_slide', 'precision_slide',	'recall_slide', 'F1_slide',
                                                      'accuracy_slide'])
+    summarypd.to_csv("../Results/{}/out/meta.csv".format(dirr), index=False)
 
