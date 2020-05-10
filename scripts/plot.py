@@ -39,27 +39,47 @@ grid.set_xticklabels(rotation=45, horizontalalignment='right', fontsize='medium'
 grid.set(ylim=(0, 1))
 plt.show()
 
-# # Scatter plots
-# a = results[['name', 'AUROC_tile', 'AUROC_slide']]
-# a = a.rename(columns={'AUROC_tile': 'tile', 'AUROC_slide': 'slide'})
-# a['metrics'] = 'AUROC'
-# b = results[['name', 'AUPRC_tile', 'AUPRC_slide']]
-# b = b.rename(columns={'AUPRC_tile': 'tile', 'AUPRC_slide': 'slide'})
-# b['metrics'] = 'AUPRC'
-# c = results[['name', 'accuracy_tile', 'accuracy_slide']]
-# c = c.rename(columns={'accuracy_tile': 'tile', 'accuracy_slide': 'slide'})
-# c['metrics'] = 'accuracy'
-# d = results[['name', 'F1_tile', 'F1_slide']]
-# d = d.rename(columns={'F1_tile': 'tile', 'F1_slide': 'slide'})
-# d['metrics'] = 'F1'
-#
-# recombined = pd.concat([a, b, c, d])
-# recombined = recombined.fillna(0)
-# g = sns.FacetGrid(recombined, hue="name", col="metrics", height=4,
-#                   margin_titles=True, palette=sns.color_palette("muted"))
-# g.map(plt.scatter, "slide", "tile", edgecolor="white", s=15, lw=0.1)
-# g.set(xlim=(0.5, 1), ylim=(0.5, 1))
-# ax = g.axes.ravel()[0]
-# ax.legend(fontsize='xx-small', ncol=13, loc='upper center', bbox_to_anchor=(2, -0.15),
-#           fancybox=True, shadow=True)
-# plt.show()
+
+# Scatter plots
+a = results[['name', 'AUROC_tile', 'accuracy_tile']]
+a = a.rename(columns={'AUROC_tile': 'AUROC', 'accuracy_tile': 'accuracy'})
+a['metrics'] = 'AUROC vs accuracy'
+b = results[['name', 'precision_tile', 'recall_tile']]
+b = b.rename(columns={'precision_tile': 'precision', 'recall_tile': 'recall'})
+b['metrics'] = 'precision vs recall'
+c = results[['name', 'F1_tile', 'AUPRC_tile']]
+c = c.rename(columns={'F1_tile': 'F1', 'AUPRC_tile': 'AUPRC'})
+c['metrics'] = 'F1 vsv AUPRC'
+
+a = a.fillna(0)
+b = b.fillna(0)
+c = c.fillna(0)
+
+ga = sns.FacetGrid(a, hue="name", col="metrics", height=4,
+                  margin_titles=True, palette=sns.color_palette("muted"))
+ga.map(plt.scatter, "AUROC", "accuracy", edgecolor="white", s=15, lw=0.1)
+ga.set(xlim=(0, 1), ylim=(0, 1))
+ax = ga.axes.ravel()[0]
+ax.legend(fontsize='xx-small', ncol=4, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+          fancybox=True, shadow=True)
+plt.show()
+
+gb = sns.FacetGrid(b, hue="name", col="metrics", height=4,
+                  margin_titles=True, palette=sns.color_palette("muted"))
+gb.map(plt.scatter, "precision", "recall", edgecolor="white", s=15, lw=0.1)
+gb.set(xlim=(0, 1), ylim=(0, 1))
+ax = gb.axes.ravel()[0]
+ax.legend(fontsize='xx-small', ncol=4, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+          fancybox=True, shadow=True)
+plt.show()
+
+gc = sns.FacetGrid(c, hue="name", col="metrics", height=4,
+                  margin_titles=True, palette=sns.color_palette("muted"))
+gc.map(plt.scatter, "F1", "AUPRC", edgecolor="white", s=15, lw=0.1)
+gc.set(xlim=(0, 1), ylim=(0, 1))
+ax = gc.axes.ravel()[0]
+ax.legend(fontsize='xx-small', ncol=4, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+          fancybox=True, shadow=True)
+plt.show()
+
+
