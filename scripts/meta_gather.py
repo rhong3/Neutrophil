@@ -22,6 +22,6 @@ for dir in os.listdir('../Results'):
     except FileNotFoundError:
         pass
 
-metapd = metapd.sort(['AUROC_tile', 'AUPRC_tile'], ascending=[0, 0])
+metapd = metapd.sort_values(['AUROC_tile', 'AUPRC_tile'], ascending=[0, 0])
 metapd.to_csv('../Results/meta_summary.csv', index=False)
 
