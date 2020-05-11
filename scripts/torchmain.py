@@ -166,30 +166,6 @@ def modeldict(mmd):
         out_model = pretrainedmodels.__dict__['dpn107'](num_classes=1000, pretrained='imagenet+5k')
     elif mmd == 'dpn107':
         out_model = pretrainedmodels.__dict__['dpn107'](num_classes=1000, pretrained=None)
-    elif mmd == 'senet154_pt':
-        out_model = pretrainedmodels.__dict__['senet154'](num_classes=1000, pretrained='imagenet')
-    elif mmd == 'senet154':
-        out_model = pretrainedmodels.__dict__['senet154'](num_classes=1000, pretrained=None)
-    elif mmd == 'se_resnet50_pt':
-        out_model = pretrainedmodels.__dict__['se_resnet50'](num_classes=1000, pretrained='imagenet')
-    elif mmd == 'se_resnet50':
-        out_model = pretrainedmodels.__dict__['se_resnet50'](num_classes=1000, pretrained=None)
-    elif mmd == 'se_resnet101_pt':
-        out_model = pretrainedmodels.__dict__['se_resnet101'](num_classes=1000, pretrained='imagenet')
-    elif mmd == 'se_resnet101':
-        out_model = pretrainedmodels.__dict__['se_resnet101'](num_classes=1000, pretrained=None)
-    elif mmd == 'se_resnet152_pt':
-        out_model = pretrainedmodels.__dict__['se_resnet152'](num_classes=1000, pretrained='imagenet')
-    elif mmd == 'se_resnet152':
-        out_model = pretrainedmodels.__dict__['se_resnet152'](num_classes=1000, pretrained=None)
-    elif mmd == 'se_resnext50_32x4d_pt':
-        out_model = pretrainedmodels.__dict__['se_resnext50_32x4d'](num_classes=1000, pretrained='imagenet')
-    elif mmd == 'se_resnext50_32x4d':
-        out_model = pretrainedmodels.__dict__['se_resnext50_32x4d'](num_classes=1000, pretrained=None)
-    elif mmd == 'se_resnext101_32x4d_pt':
-        out_model = pretrainedmodels.__dict__['se_resnext101_32x4d'](num_classes=1000, pretrained='imagenet')
-    elif mmd == 'se_resnext101_32x4d':
-        out_model = pretrainedmodels.__dict__['se_resnext101_32x4d'](num_classes=1000, pretrained=None)
     elif mmd == 'fbresnet152_pt':
         out_model = pretrainedmodels.__dict__['fbresnet152'](num_classes=1000, pretrained='imagenet')
     elif mmd == 'fbresnet152':
@@ -254,9 +230,10 @@ if __name__ == '__main__':
         features = list(model.classifier.children())[:-1]  # Remove last layer
         features.extend([torch.nn.Linear(number_features, 2)])
         model.classifier = torch.nn.Sequential(*features)
-    elif 'inceptionv4' in md or 'inceptionresnetv2' in md or 'xception' in md or 'dpn' in md \
-            or 'se_res' in md or 'senet154' in md or 'fbresnet152' in md:
+    elif 'inceptionv4' in md or 'inceptionresnetv2' in md or 'xception' in md or 'fbresnet152' in md:
         model.last_linear = nn.Linear(model.last_linear.in_features, 2)
+    elif 'dpn' in md:
+        model.last_linear = nn.Conv2d(model.last_linear.in_channels, 2, kernel_size=1, bias=True)
     else:
         model.fc = nn.Linear(model.fc.in_features, 2)
 
