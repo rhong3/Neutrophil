@@ -108,11 +108,13 @@ def modeldict(mmd):
     elif mmd == 'densenet201': out_model = models.densenet201(pretrained=False)
     elif mmd == 'inception_pt': out_model = models.inception_v3(pretrained=True, aux_logits=False)
     elif mmd == 'inception': out_model = models.inception_v3(pretrained=False, aux_logits=False)
-    elif mmd == 'inceptionv4_pt': pretrainedmodels.__dict__['inceptionv4'](num_classes=2, pretrained='imagenet')
-    elif mmd == 'inceptionv4': pretrainedmodels.__dict__['inceptionv4'](num_classes=2)
+    elif mmd == 'inceptionv4_pt':
+        out_model = pretrainedmodels.__dict__['inceptionv4'](num_classes=1000, pretrained='imagenet')
+    elif mmd == 'inceptionv4': out_model = pretrainedmodels.__dict__['inceptionv4'](num_classes=1000, pretrained=None)
     elif mmd == 'inceptionresnetv2_pt':
-        pretrainedmodels.__dict__['inceptionresnetv2'](num_classes=2, pretrained='imagenet')
-    elif mmd == 'inceptionresnetv2': pretrainedmodels.__dict__['inceptionresnetv2'](num_classes=2)
+        out_model = pretrainedmodels.__dict__['inceptionresnetv2'](num_classes=1000, pretrained='imagenet')
+    elif mmd == 'inceptionresnetv2':
+        out_model = pretrainedmodels.__dict__['inceptionresnetv2'](num_classes=1000, pretrained=None)
     elif mmd == 'googlenet_pt': out_model = models.googlenet(pretrained=True, aux_logits=False)
     elif mmd == 'googlenet': out_model = models.googlenet(pretrained=False, aux_logits=False)
     elif mmd == 'shufflenet05_pt': out_model = models.shufflenet_v2_x0_5(pretrained=True)
@@ -136,10 +138,14 @@ def modeldict(mmd):
     elif mmd == 'mnasnet10_pt': out_model = models.mnasnet1_0(pretrained=True)
     elif mmd == 'mnasnet10': out_model = models.mnasnet1_0(pretrained=False)
     elif mmd == 'mnasnet13': out_model = models.mnasnet1_3(pretrained=False)
-    elif mmd == 'xception_pt': pretrainedmodels.__dict__['xception'](num_classes=2, pretrained='imagenet')
-    elif mmd == 'xception': pretrainedmodels.__dict__['xception'](num_classes=2)
-    elif mmd == 'polynet_pt': pretrainedmodels.__dict__['polynet'](num_classes=2, pretrained='imagenet')
-    elif mmd == 'polynet': pretrainedmodels.__dict__['polynet'](num_classes=2)
+    elif mmd == 'xception_pt':
+        out_model = pretrainedmodels.__dict__['xception'](num_classes=1000, pretrained='imagenet')
+    elif mmd == 'xception':
+        out_model = pretrainedmodels.__dict__['xception'](num_classes=1000, pretrained=None)
+    elif mmd == 'polynet_pt':
+        out_model = pretrainedmodels.__dict__['polynet'](num_classes=1000, pretrained='imagenet')
+    elif mmd == 'polynet':
+        out_model = pretrainedmodels.__dict__['polynet'](num_classes=1000, pretrained=None)
     else:
         out_model = None
         print('Invalid model name. Terminated.')
@@ -201,7 +207,7 @@ if __name__ == '__main__':
         features.extend([torch.nn.Linear(number_features, 2)])
         model.classifier = torch.nn.Sequential(*features)
     elif 'inceptionv4' in md or 'inceptionresnetv2' in md or 'xception' in md or 'polynet' in md:
-        pass
+        model.last_linear = nn.Linear(model.last_linear.in_features, 2)
     else:
         model.fc = nn.Linear(model.fc.in_features, 2)
 
